@@ -89,6 +89,11 @@
     .hint{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5;}
     .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
     .category-notes{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+    .category-notes-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+    .category-notes-head .card-title{margin-bottom:0;}
+    .icon-btn{width:28px;height:28px;border-radius:999px;border:1px solid var(--accent-strong);background:transparent;color:var(--accent);cursor:pointer;font-size:18px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+    .category-notes-body{display:none;}
+    .category-notes.open .category-notes-body{display:block;}
     .category-notes-grid{display:grid;grid-template-columns:1fr;gap:8px;}
     .offers-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
     @media(max-width:700px){.offers-grid{grid-template-columns:1fr;}}
@@ -140,21 +145,26 @@
         <button class="btn btn-red"     id="deleteItemBtn">🗑 حذف المحدد</button>
         <button class="btn btn-outline" id="cleanupImagesBtn">تنظيف الصور غير المستخدمة</button>
       </div>
-      <div class="category-notes">
-        <div class="card-title">وصف القسم</div>
-        <div class="hint">هذه النصوص تظهر تحت اسم القسم في المنيو حسب اللغة المختارة.</div>
-        <div class="category-notes-grid">
-          <div class="field">
-            <label>وصف القسم بالعربي</label>
-            <textarea id="catNoteAr" rows="2" dir="rtl"></textarea>
-          </div>
-          <div class="field">
-            <label>Category description in English</label>
-            <textarea id="catNoteEn" rows="2" dir="ltr"></textarea>
-          </div>
-          <div class="field">
-            <label>תיאור הקטגוריה בעברית</label>
-            <textarea id="catNoteHe" rows="2" dir="rtl"></textarea>
+      <div class="category-notes" id="categoryNotesBox">
+        <div class="category-notes-head">
+          <div class="card-title">وصف القسم</div>
+          <button type="button" class="icon-btn" id="toggleCategoryNotesBtn" title="إظهار وصف القسم">+</button>
+        </div>
+        <div class="category-notes-body" id="categoryNotesBody">
+          <div class="hint">هذه النصوص تظهر تحت اسم القسم في المنيو حسب اللغة المختارة.</div>
+          <div class="category-notes-grid">
+            <div class="field">
+              <label>وصف القسم بالعربي</label>
+              <textarea id="catNoteAr" rows="2" dir="rtl"></textarea>
+            </div>
+            <div class="field">
+              <label>Category description in English</label>
+              <textarea id="catNoteEn" rows="2" dir="ltr"></textarea>
+            </div>
+            <div class="field">
+              <label>תיאור הקטגוריה בעברית</label>
+              <textarea id="catNoteHe" rows="2" dir="rtl"></textarea>
+            </div>
           </div>
         </div>
       </div>
@@ -253,6 +263,7 @@ const BACKUP_BUCKET = 'backups';
 const BACKUP_PREFIX = 'menu-backup-';
 const MAX_BACKUPS = 10;
 const BACKUP_TEMPLATE_VERSION = 'lastella-backup-v4';
+const PUBLIC_LOGO_URL = 'https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png';
 
 // ── DOM refs ────────────────────────────────────────────────────
 const secTabs    = document.getElementById('secTabs');
@@ -269,6 +280,8 @@ const imgPreview = document.getElementById('imgPreview');
 const catNoteAr  = document.getElementById('catNoteAr');
 const catNoteEn  = document.getElementById('catNoteEn');
 const catNoteHe  = document.getElementById('catNoteHe');
+const categoryNotesBox = document.getElementById('categoryNotesBox');
+const toggleCategoryNotesBtn = document.getElementById('toggleCategoryNotesBtn');
 
 // ── Auth ────────────────────────────────────────────────────────
 async function login() {
@@ -407,6 +420,8 @@ function renderSectionTabs() {
 }
 
 function renderSectionSelect() {
+  const selectedItemSectionId = selectedItemId ? findSectionByItemId(selectedItemId)?.id : null;
+  const currentFormSectionId = fSection.value;
   fSection.innerHTML = '';
   data.sections.forEach(sec => {
     const opt = document.createElement('option');
@@ -414,7 +429,11 @@ function renderSectionSelect() {
     opt.textContent = sec.label.ar;
     fSection.appendChild(opt);
   });
-  if (activeSectionId) fSection.value = activeSectionId;
+
+  const nextValue = selectedItemSectionId || currentFormSectionId || activeSectionId;
+  if (nextValue && data.sections.some(sec => sec.id === nextValue)) {
+    fSection.value = nextValue;
+  }
 }
 
 function renderSectionDetails() {
@@ -422,6 +441,12 @@ function renderSectionDetails() {
   catNoteAr.value = sec?.note?.ar || '';
   catNoteEn.value = sec?.note?.en || '';
   catNoteHe.value = sec?.note?.he || '';
+}
+
+function toggleCategoryNotes() {
+  const isOpen = categoryNotesBox.classList.toggle('open');
+  toggleCategoryNotesBtn.textContent = isOpen ? '−' : '+';
+  toggleCategoryNotesBtn.title = isOpen ? 'إخفاء وصف القسم' : 'إظهار وصف القسم';
 }
 
 function renderTable() {
@@ -1044,7 +1069,7 @@ function buildBackupPayload() {
 function buildBackupMenuHtml() {
   const backupData = buildBackupPayload();
   const payload = JSON.stringify(backupData).replace(/</g, '\\u003c');
-  const logoUrl = new URL('images/lastella-logo.png', window.location.href).href;
+  const logoUrl = PUBLIC_LOGO_URL;
   const htmlEsc = value => String(value || '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1350,6 +1375,7 @@ document.getElementById('cleanupImagesBtn').addEventListener('click', cleanupUnu
 document.getElementById('applyItemBtn').addEventListener('click', applyItem);
 document.getElementById('clearFormBtn').addEventListener('click', clearForm);
 document.getElementById('saveOffersBtn').addEventListener('click', saveOffers);
+toggleCategoryNotesBtn.addEventListener('click', toggleCategoryNotes);
 [fAr, fEn, fHe, fPrice, fImage].forEach(field =>
   field.addEventListener('input', syncSelectedItemFromForm));
 catNoteAr.addEventListener('input', updateActiveSectionNotes);

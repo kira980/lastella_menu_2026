@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <title>LaStella – قائمة المطعم</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg:#05050a; --bg-soft:#10101a; --card:#171724;
@@ -13,6 +16,33 @@
     }
     *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
     body{background:radial-gradient(circle at top,#171724 0,#030307 45%,#000 100%);color:var(--text-main);min-height:100vh;padding:12px;}
+    body.is-loading{overflow:hidden;}
+    body.is-loading .page{opacity:0;pointer-events:none;}
+    .loading-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at top,#222 0%,#020202 40%,#000 100%);color:#f5f5f5;font-family:"Cairo",system-ui,-apple-system,sans-serif;transition:opacity .45s ease,visibility .45s ease;}
+    .loading-screen::before{content:"";position:fixed;inset:0;background:radial-gradient(circle at center,transparent 45%,rgba(0,0,0,.7) 100%);pointer-events:none;z-index:-2;}
+    .loading-screen::after{content:"";position:fixed;inset:18px;border-radius:18px;border:1px solid rgba(255,215,0,.28);box-shadow:0 0 25px rgba(255,215,0,.25),0 0 60px rgba(0,0,0,.9) inset;pointer-events:none;z-index:-1;}
+    .loading-screen.done{opacity:0;visibility:hidden;}
+    .loading-particles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:-1;}
+    .loading-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(255,215,0,.85);filter:blur(.3px);opacity:.7;animation:floatUp 9s linear infinite;animation-delay:-6s;}
+    .loading-particle:nth-child(2){width:2px;height:2px;left:20%;animation-duration:11s;animation-delay:-3s;opacity:.5;}
+    .loading-particle:nth-child(3){width:4px;height:4px;left:40%;animation-duration:13s;animation-delay:-6s;opacity:.7;}
+    .loading-particle:nth-child(4){width:2px;height:2px;left:60%;animation-duration:10s;animation-delay:-2s;opacity:.6;}
+    .loading-particle:nth-child(5){width:3px;height:3px;left:75%;animation-duration:14s;animation-delay:-5s;opacity:.8;}
+    .loading-particle:nth-child(6){width:2px;height:2px;left:10%;animation-duration:12s;animation-delay:-4s;opacity:.5;}
+    .loading-wrapper{text-align:center;padding:24px;}
+    .loading-wrapper,.loading-wrapper *{font-family:"Cairo",system-ui,-apple-system,sans-serif;}
+    .loading-logo-wrapper{width:200px;height:200px;margin:0 auto 20px;position:relative;}
+    .loading-logo-wrapper::before{content:"";position:absolute;inset:-14px;border-radius:50%;box-shadow:0 0 35px rgba(255,215,0,.4),0 0 70px rgba(255,215,0,.18);opacity:.8;filter:blur(2px);z-index:-2;}
+    .loading-logo-wrapper img{width:100%;height:100%;object-fit:contain;display:block;border-radius:50%;}
+    .loading-headline{font-family:"Playfair Display",serif;font-size:24px;margin-bottom:6px;letter-spacing:.06em;}
+    .loading-sub-headline{font-size:14px;opacity:.88;}
+    .loading-sub-headline span{color:#ffd700;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:"Playfair Display",serif;font-size:15px;}
+    .loading-divider{width:120px;height:1px;margin:18px auto;background:linear-gradient(to right,transparent,rgba(255,215,0,.85),transparent);}
+    .loading-status{margin-top:10px;font-size:13px;opacity:.8;display:inline-flex;align-items:center;gap:8px;}
+    .loading-dot{width:9px;height:9px;border-radius:50%;background:#ffd700;position:relative;flex:0 0 auto;}
+    .loading-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(255,215,0,.6);animation:ping 1s linear infinite;animation-delay:-.45s;}
+    @keyframes ping{0%{transform:scale(1);opacity:1;}100%{transform:scale(1.9);opacity:0;}}
+    @keyframes floatUp{0%{transform:translateY(100vh);opacity:0;}10%{opacity:.75;}90%{opacity:.4;}100%{transform:translateY(-10vh);opacity:0;}}
     .page{max-width:960px;margin:0 auto 48px auto;position:relative;}
     .lang-switch{position:absolute;top:10px;left:12px;display:flex;gap:6px;z-index:20;}
     .lang-pill{padding:4px 10px;border-radius:999px;border:1px solid var(--border-soft);background:rgba(0,0,0,.7);color:var(--text-muted);font-size:11px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
@@ -45,10 +75,34 @@
     .item-price{font-size:15px;font-weight:600;white-space:nowrap;text-align:left;align-self:center;}
     .item-photo{width:100%;max-width:220px;height:140px;border-radius:18px;margin-top:6px;object-fit:cover;display:block;border:1px solid var(--border-soft);}
     .loading-text{text-align:center;color:var(--text-muted);font-size:14px;padding:40px 0;}
-    @media(max-width:600px){body{padding:10px;}.preload{padding-inline:14px;}.hero-logo{width:78px;top:14px;right:14px;}.menu-section{padding-inline:12px;}}
+    @media(max-width:600px){body{padding:10px;}.loading-logo-wrapper{width:168px;height:168px;}.preload{padding-inline:14px;}.hero-logo{width:78px;top:14px;right:14px;}.menu-section{padding-inline:12px;}}
   </style>
 </head>
-<body>
+<body class="is-loading">
+  <div class="loading-screen" id="loadingScreen" aria-live="polite">
+    <div class="loading-particles">
+      <div class="loading-particle" style="left:30%;animation-delay:-6s;"></div>
+      <div class="loading-particle"></div>
+      <div class="loading-particle"></div>
+      <div class="loading-particle"></div>
+      <div class="loading-particle"></div>
+      <div class="loading-particle"></div>
+    </div>
+
+    <div class="loading-wrapper">
+      <div class="loading-logo-wrapper">
+        <img src="https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png" alt="La Stella Restaurant Logo" onerror="this.style.display='none'">
+      </div>
+
+      <div class="loading-headline">مرحبا بكم في لاستيلا</div>
+      <div class="loading-sub-headline">Welcome to <span>La&nbsp;Stella</span></div>
+      <div class="loading-divider"></div>
+      <div class="loading-status">
+        <span class="loading-dot"></span>
+        <span id="loadingScreenText">Opening menu...</span>
+      </div>
+    </div>
+  </div>
   <div class="page">
     <div class="lang-switch">
       <button class="lang-pill active" data-lang="ar">العربية</button>
@@ -56,7 +110,7 @@
       <button class="lang-pill" data-lang="en">English</button>
     </div>
     <section class="preload">
-      <img src="images/lastella-logo.png" alt="La Stella" class="hero-logo" onerror="this.style.display='none'" />
+      <img src="https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png" alt="La Stella" class="hero-logo" onerror="this.style.display='none'" />
       <p class="intro-text" id="introText"></p>
       <div class="preload-actions">
         <button class="btn-primary" id="goToMenuBtn">
@@ -67,7 +121,7 @@
     </section>
     <nav class="category-strip" id="categoryStrip"></nav>
     <div class="sections-wrapper" id="sectionsWrapper">
-      <p class="loading-text" id="loadingText">جارٍ تحميل القائمة...</p>
+      <p class="loading-text" id="loadingText">Opening menu...</p>
     </div>
     <div class="meal-offers" id="mealOffersBox">
       <div class="meal-offers-title" id="mealOffersTitle"></div>
@@ -106,9 +160,9 @@
     };
 
     const LANGS = {
-      ar: { dir: 'rtl', btn: 'انتقال للمنيو',   offersTitle: 'عرض الوجبات',  loading: 'جارٍ تحميل القائمة...',  error: 'تعذّر تحميل القائمة. يرجى المحاولة لاحقاً.' },
-      he: { dir: 'rtl', btn: 'לפתיחת התפריט', offersTitle: 'מבצעי ארוחות',  loading: 'טוען תפריט...',           error: 'שגיאה בטעינת התפריט.' },
-      en: { dir: 'ltr', btn: 'View the menu',  offersTitle: 'Meal Offers',    loading: 'Loading menu...',         error: 'Failed to load menu. Please try again.' }
+      ar: { dir: 'rtl', btn: 'انتقال للمنيو',   offersTitle: 'عرض الوجبات',  loading: 'Opening menu...',  error: 'تعذّر تحميل القائمة. يرجى المحاولة لاحقاً.' },
+      he: { dir: 'rtl', btn: 'לפתיחת התפריט', offersTitle: 'מבצעי ארוחות',  loading: 'Opening menu...',  error: 'שגיאה בטעינת התפריט.' },
+      en: { dir: 'ltr', btn: 'View the menu',  offersTitle: 'Meal Offers',    loading: 'Opening menu...',  error: 'Failed to load menu. Please try again.' }
     };
 
     let currentLang    = 'ar';
@@ -140,6 +194,20 @@
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function setLoadingScreenText(text) {
+      const el = document.getElementById('loadingScreenText');
+      if (el) el.textContent = text;
+    }
+
+    function revealLoadedMenu() {
+      const screen = document.getElementById('loadingScreen');
+      document.body.classList.remove('is-loading');
+      if (screen) {
+        screen.classList.add('done');
+        setTimeout(() => screen.remove(), 500);
+      }
+    }
+
     function render(lang) {
       currentLang = lang;
       const L = LANGS[lang];
@@ -154,6 +222,7 @@
 
       const loadingEl = document.getElementById('loadingText');
       if (loadingEl) loadingEl.textContent = L.loading;
+      setLoadingScreenText(L.loading);
 
       if (allCategories.length === 0) return;
 
@@ -265,10 +334,12 @@
         currentSection = allCategories[0]?.id || null;
 
         render(currentLang);
+        revealLoadedMenu();
       } catch (err) {
         console.error('LaStella menu load error:', err);
         const loadingEl = document.getElementById('loadingText');
         if (loadingEl) loadingEl.textContent = LANGS[currentLang].error;
+        setLoadingScreenText(LANGS[currentLang].error);
       }
     })();
   </script>
