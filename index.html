@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>LaStella – قائمة المطعم</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg:#05050a; --bg-soft:#10101a; --card:#171724;
+      --accent:#d4a258; --accent-soft:rgba(212,162,88,.18);
+      --accent-strong:rgba(212,162,88,.35); --text-main:#fff;
+      --text-muted:#b6b6c8; --border-soft:#282838;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+    body{background:radial-gradient(circle at top,#171724 0,#030307 45%,#000 100%);color:var(--text-main);min-height:100vh;padding:12px;}
+    .page{max-width:960px;margin:0 auto 48px auto;position:relative;}
+    .lang-switch{position:absolute;top:10px;left:12px;display:flex;gap:6px;z-index:20;}
+    .lang-pill{padding:4px 10px;border-radius:999px;border:1px solid var(--border-soft);background:rgba(0,0,0,.7);color:var(--text-muted);font-size:11px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .lang-pill.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-strong);}
+    .preload{position:relative;margin-top:48px;margin-bottom:20px;border-radius:26px;padding:24px 18px 26px;background:radial-gradient(circle at top right,rgba(212,162,88,.35),transparent 55%),linear-gradient(145deg,#11111c,#05050a);border:1px solid var(--accent-strong);box-shadow:0 20px 55px rgba(0,0,0,.75);overflow:hidden;}
+    .hero-logo{position:absolute;top:16px;right:18px;width:96px;height:auto;opacity:.98;pointer-events:none;}
+    .intro-text{margin-top:120px;color:var(--text-muted);font-size:14px;line-height:1.7;}
+    .preload-actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+    .btn-primary{padding:9px 20px;border-radius:999px;border:none;cursor:pointer;background:var(--accent);color:#120f0b;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(212,162,88,.6);display:inline-flex;align-items:center;gap:6px;}
+    .category-strip{margin:18px 0 12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+    .category-pill{padding:6px 14px;border-radius:999px;border:1px solid var(--border-soft);background:#070712;color:var(--text-muted);font-size:13px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .category-pill.active,.category-pill:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-strong);}
+    .meal-offers{width:min(100%,520px);margin:16px auto 0;padding:12px 18px;border-radius:14px;background:rgba(0,0,0,0.35);border:1px dashed rgba(212,162,88,0.5);text-align:center;}
+    .meal-offers-title{font-size:13px;color:var(--accent);margin-bottom:6px;text-align:center;}
+    .meal-offers-list{list-style:none;padding:0;margin:0;}
+    .meal-offers-list li{font-size:12px;color:var(--text-muted);margin-bottom:3px;line-height:1.5;text-align:center;}
+    .sections-wrapper{position:relative;min-height:200px;}
+    .menu-section{margin-bottom:26px;padding:18px 16px 12px;border-radius:22px;background:linear-gradient(145deg,#10101c,#060610);border:1px solid var(--border-soft);box-shadow:0 16px 35px rgba(0,0,0,.7);display:none;}
+    .menu-section.active-section{display:block;}
+    .section-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+    .section-title{font-size:18px;}
+    .section-title .dot{color:var(--accent);margin-inline-start:6px;}
+    .section-tag{font-size:11px;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
+    .section-note{font-size:12px;color:var(--text-muted);margin-bottom:10px;}
+    .menu-item{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:4px;padding:10px 0;border-bottom:1px dashed rgba(130,130,150,.45);}
+    .menu-item:last-child{border-bottom:none;padding-bottom:0;}
+    .item-main{min-width:0;}
+    .item-name-row{display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+    .item-name{font-size:15px;font-weight:600;}
+    .item-price{font-size:15px;font-weight:600;white-space:nowrap;text-align:left;align-self:center;}
+    .item-photo{width:100%;max-width:220px;height:140px;border-radius:18px;margin-top:6px;object-fit:cover;display:block;border:1px solid var(--border-soft);}
+    .loading-text{text-align:center;color:var(--text-muted);font-size:14px;padding:40px 0;}
+    @media(max-width:600px){body{padding:10px;}.preload{padding-inline:14px;}.hero-logo{width:78px;top:14px;right:14px;}.menu-section{padding-inline:12px;}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="lang-switch">
+      <button class="lang-pill active" data-lang="ar">العربية</button>
+      <button class="lang-pill" data-lang="he">עברית</button>
+      <button class="lang-pill" data-lang="en">English</button>
+    </div>
+    <section class="preload">
+      <img src="images/lastella-logo.png" alt="La Stella" class="hero-logo" onerror="this.style.display='none'" />
+      <p class="intro-text" id="introText"></p>
+      <div class="preload-actions">
+        <button class="btn-primary" id="goToMenuBtn">
+          <span id="btnLabel">انتقال للمنيو</span>
+          <span>↓</span>
+        </button>
+      </div>
+    </section>
+    <nav class="category-strip" id="categoryStrip"></nav>
+    <div class="sections-wrapper" id="sectionsWrapper">
+      <p class="loading-text" id="loadingText">جارٍ تحميل القائمة...</p>
+    </div>
+    <div class="meal-offers" id="mealOffersBox">
+      <div class="meal-offers-title" id="mealOffersTitle"></div>
+      <ul class="meal-offers-list" id="mealOffersList"></ul>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase.js"></script>
+  <script>
+    const INTRO = {
+      ar: 'أهلاً وسهلاً بكم في <strong>La Stella</strong>، مطعم بتفاصيل راقية ونكهات مشوية على أصولها.',
+      en: 'Welcome to <strong>La Stella</strong>, a restaurant where elegant details meet perfectly grilled flavors.',
+      he: 'ברוכים הבאים ל-<strong>La Stella</strong>, מסעדה שבה פרטים מכובדים נפגשים עם טעמים מושלמים על האש.'
+    };
+
+    let mealOffers = {
+      ar: [
+        'سلطة لشخص مع وجبة رئيسية — 35 ₪',
+        'سلطة لشخص بدون وجبة رئيسية — 45 ₪',
+        'سلطة لشخص بدون أي وجبة — 60 ₪',
+        'إمكانية إضافة موكرام'
+      ],
+      en: [
+        'Salad per person with a main course — ₪35',
+        'Salad per person without a main course — ₪45',
+        'Salad per person without any meal — ₪60',
+        'Option to add Mokram'
+      ],
+      he: [
+        'סלט לסועד עם מנה עיקרית — 35 ₪',
+        'סלט לסועד ללא מנה עיקרית — 45 ₪',
+        'סלט לסועד ללא כלום — 60 ₪',
+        'אפשרות להוסיף מוקראם'
+      ]
+    };
+
+    const LANGS = {
+      ar: { dir: 'rtl', btn: 'انتقال للمنيو',   offersTitle: 'عرض الوجبات',  loading: 'جارٍ تحميل القائمة...',  error: 'تعذّر تحميل القائمة. يرجى المحاولة لاحقاً.' },
+      he: { dir: 'rtl', btn: 'לפתיחת התפריט', offersTitle: 'מבצעי ארוחות',  loading: 'טוען תפריט...',           error: 'שגיאה בטעינת התפריט.' },
+      en: { dir: 'ltr', btn: 'View the menu',  offersTitle: 'Meal Offers',    loading: 'Loading menu...',         error: 'Failed to load menu. Please try again.' }
+    };
+
+    let currentLang    = 'ar';
+    let currentSection = null;
+    let allCategories  = [];
+    let allItems       = [];
+
+    function getItemName(item, lang) {
+      if (lang === 'en' && item.name_en && item.name_en.trim()) return item.name_en;
+      if (lang === 'he' && item.name_he && item.name_he.trim()) return item.name_he;
+      return item.name_ar || '';
+    }
+
+    function getCatName(cat, lang) {
+      if (lang === 'en' && cat.name_en && cat.name_en.trim()) return cat.name_en;
+      if (lang === 'he' && cat.name_he && cat.name_he.trim()) return cat.name_he;
+      return cat.name_ar || '';
+    }
+
+    function getCatNote(cat, lang) {
+      if (lang === 'en' && cat.note_en && cat.note_en.trim()) return cat.note_en;
+      if (lang === 'he' && cat.note_he && cat.note_he.trim()) return cat.note_he;
+      return cat.note_ar || '';
+    }
+
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function render(lang) {
+      currentLang = lang;
+      const L = LANGS[lang];
+      document.documentElement.lang = lang;
+      document.documentElement.dir  = L.dir;
+
+      document.querySelectorAll('.lang-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.lang === lang));
+
+      document.getElementById('introText').innerHTML = INTRO[lang] || '';
+      document.getElementById('btnLabel').textContent = L.btn;
+
+      const loadingEl = document.getElementById('loadingText');
+      if (loadingEl) loadingEl.textContent = L.loading;
+
+      if (allCategories.length === 0) return;
+
+      // Category strip
+      const strip = document.getElementById('categoryStrip');
+      strip.innerHTML = '';
+      allCategories.forEach(cat => {
+        const pill = document.createElement('div');
+        pill.className = 'category-pill' + (cat.id === currentSection ? ' active' : '');
+        pill.textContent = getCatName(cat, lang);
+        pill.dataset.section = cat.id;
+        pill.addEventListener('click', () => activateSection(cat.id));
+        strip.appendChild(pill);
+      });
+
+      // Menu sections
+      const wrapper = document.getElementById('sectionsWrapper');
+      wrapper.innerHTML = '';
+      allCategories.forEach(cat => {
+        const catItems = allItems.filter(item => item.category_id === cat.id);
+        const section  = document.createElement('section');
+        section.className = 'menu-section' + (cat.id === currentSection ? ' active-section' : '');
+        section.id = 'sec-' + cat.id;
+
+        const note = getCatNote(cat, lang);
+        section.innerHTML = `
+          <div class="section-header">
+            <h2 class="section-title">${esc(getCatName(cat, lang))}<span class="dot">•</span></h2>
+            <div class="section-tag">${esc(cat.tag || '')}</div>
+          </div>
+          ${note ? `<p class="section-note">${esc(note)}</p>` : ''}
+          <div style="margin-top:22px"></div>
+        `;
+
+        catItems.forEach(item => {
+          const article = document.createElement('article');
+          article.className = 'menu-item';
+          const priceText = (item.price_label && item.price_label.trim())
+            ? item.price_label
+            : (item.price != null ? '₪' + Number(item.price).toLocaleString() : '—');
+          const name = esc(getItemName(item, lang));
+          article.innerHTML = `
+            <div class="item-main">
+              <div class="item-name-row"><span class="item-name">${name}</span></div>
+              ${item.image_url ? `<img src="${esc(item.image_url)}" alt="${name}" class="item-photo" loading="lazy" onerror="this.style.display='none'" />` : ''}
+            </div>
+            <div class="item-price">${esc(priceText)}</div>
+          `;
+          section.appendChild(article);
+        });
+
+        wrapper.appendChild(section);
+      });
+
+      // Meal offers
+      document.getElementById('mealOffersTitle').textContent = L.offersTitle;
+      const list = document.getElementById('mealOffersList');
+      list.innerHTML = '';
+      (mealOffers[lang] || []).forEach(line => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        list.appendChild(li);
+      });
+    }
+
+    function activateSection(id) {
+      currentSection = id;
+      document.querySelectorAll('.menu-section').forEach(s =>
+        s.classList.toggle('active-section', s.id === 'sec-' + id));
+      document.querySelectorAll('.category-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.section === id));
+      scrollToCategories();
+    }
+
+    function scrollToCategories() {
+      const el = document.getElementById('categoryStrip');
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 10;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+
+    document.getElementById('goToMenuBtn').addEventListener('click', scrollToCategories);
+    document.querySelectorAll('.lang-pill').forEach(btn =>
+      btn.addEventListener('click', () => render(btn.dataset.lang)));
+
+    render(currentLang);
+
+    (async function loadMenu() {
+      try {
+        const [catResult, itemResult, settingsResult] = await Promise.all([
+          db.from('categories')
+            .select('id,name_ar,name_en,name_he,note_ar,note_en,note_he,tag,sort_order')
+            .eq('is_active', true)
+            .order('sort_order', { ascending: true }),
+          db.from('menu_items')
+            .select('id,category_id,name_ar,name_en,name_he,description_ar,description_en,description_he,price,price_label,image_url,sort_order')
+            .eq('is_available', true)
+            .order('sort_order', { ascending: true }),
+          db.from('settings').select('value').eq('key', 'meal_offers').maybeSingle()
+        ]);
+
+        if (catResult.error)  throw catResult.error;
+        if (itemResult.error) throw itemResult.error;
+
+        if (settingsResult.data?.value) mealOffers = settingsResult.data.value;
+
+        allCategories  = catResult.data  || [];
+        allItems       = itemResult.data || [];
+        currentSection = allCategories[0]?.id || null;
+
+        render(currentLang);
+      } catch (err) {
+        console.error('LaStella menu load error:', err);
+        const loadingEl = document.getElementById('loadingText');
+        if (loadingEl) loadingEl.textContent = LANGS[currentLang].error;
+      }
+    })();
+  </script>
+</body>
+</html>
