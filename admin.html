@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>LaStella — لوحة التحكم</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg:#05050a; --card:#131320; --border:#2a2a3c;
+      --accent:#d4a258; --accent-soft:rgba(212,162,88,.15);
+      --accent-strong:rgba(212,162,88,.4);
+      --text:#f0f0ff; --muted:#9090aa;
+      --ok:#4ecb71; --warn:#f5c842; --bad:#ef476f;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,sans-serif;}
+    body{background:radial-gradient(circle at top,#14141f 0,#030307 50%,#000 100%);color:var(--text);min-height:100vh;padding:16px;}
+
+    /* ── top bar ── */
+    .topbar{max-width:1200px;margin:0 auto 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+    .topbar h1{font-size:20px;letter-spacing:.03em;}
+    .topbar h1 span{color:var(--accent);}
+    .topbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+    /* ── login gate ── */
+    #gate{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:14px;}
+    #gate h2{font-size:18px;color:var(--accent);}
+    #gate input{background:#111;border:1px solid var(--border);border-radius:10px;color:var(--text);padding:8px 14px;font-size:14px;width:260px;}
+    #gate input::placeholder{color:var(--muted);}
+    #gate button{padding:8px 22px;border-radius:999px;border:none;background:var(--accent);color:#120f0b;font-weight:600;cursor:pointer;width:260px;}
+    #gate .gate-err{font-size:12px;color:var(--bad);min-height:16px;text-align:center;max-width:300px;line-height:1.5;}
+    #gate .gate-label{font-size:11px;color:var(--muted);align-self:flex-start;margin-bottom:-8px;width:260px;}
+
+    /* ── buttons ── */
+    .btn{border:none;border-radius:999px;padding:7px 16px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:600;transition:opacity .15s;}
+    .btn:hover{opacity:.85;}
+    .btn:disabled{opacity:.45;cursor:not-allowed;}
+    .btn-gold{background:var(--accent);color:#120f0b;box-shadow:0 6px 18px rgba(212,162,88,.4);}
+    .btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent-strong);}
+    .btn-red{background:var(--bad);color:#fff;box-shadow:0 6px 18px rgba(239,71,111,.4);}
+    .btn-green{background:var(--ok);color:#000;box-shadow:0 6px 18px rgba(78,203,113,.35);}
+
+    /* ── layout ── */
+    .shell{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 400px;gap:14px;}
+    @media(max-width:920px){.shell{grid-template-columns:1fr;}}
+
+    /* ── card ── */
+    .card{background:linear-gradient(145deg,#131320,#07070f);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.7);}
+    .card-title{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--accent);}
+
+    /* ── section tabs ── */
+    .sec-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+    .sec-tab{padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(0,0,0,.4);color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s;}
+    .sec-tab.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-strong);}
+
+    /* ── items table ── */
+    .table-wrap{max-height:460px;overflow:auto;border-radius:10px;border:1px solid var(--border);}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead{background:rgba(0,0,0,.6);position:sticky;top:0;z-index:1;}
+    th,td{padding:7px 8px;border-bottom:1px solid rgba(50,50,70,.8);text-align:right;white-space:nowrap;}
+    td.name-cell{white-space:normal;max-width:180px;}
+    tbody tr{cursor:pointer;transition:background .15s;}
+    tbody tr:hover{background:rgba(255,255,255,.03);}
+    tbody tr.selected{background:rgba(212,162,88,.1);}
+    .thumb{width:38px;height:28px;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
+
+    /* ── form ── */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-bottom:10px;}
+    @media(max-width:500px){.form-grid{grid-template-columns:1fr;}}
+    .field{display:flex;flex-direction:column;gap:3px;}
+    .field.span2{grid-column:1/-1;}
+    label{font-size:11px;color:var(--muted);}
+    input,select,textarea{background:rgba(5,5,12,.9);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:6px 9px;width:100%;transition:border-color .2s;}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent-strong);}
+    textarea{resize:vertical;min-height:38px;max-height:80px;}
+    input[readonly]{opacity:.7;cursor:default;}
+
+    .img-preview{margin-top:6px;width:100%;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none;}
+
+    /* ── status bar ── */
+    .statusbar{margin-top:10px;font-size:11px;color:var(--muted);min-height:18px;}
+    .statusbar .ok{color:var(--ok);}
+    .statusbar .warn{color:var(--warn);}
+    .statusbar .bad{color:var(--bad);}
+
+    /* ── save toast ── */
+    #saveIndicator{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ok);color:#000;padding:8px 22px;border-radius:999px;font-size:13px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.6);opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+    #saveIndicator.show{opacity:1;}
+
+    .hint{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5;}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+    .category-notes{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+    .category-notes-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+    .offers-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    @media(max-width:700px){.offers-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+
+<!-- Login Gate -->
+<div id="gate">
+  <h2>🔐 لوحة تحكم LaStella</h2>
+  <span class="gate-label">البريد الإلكتروني</span>
+  <input type="email"    id="gateEmail"    placeholder="admin@example.com" autocomplete="email" />
+  <span class="gate-label">كلمة المرور</span>
+  <input type="password" id="gatePassword" placeholder="••••••••" autocomplete="current-password" />
+  <button id="loginBtn" onclick="login()">دخول</button>
+  <div class="gate-err" id="gateErr"></div>
+</div>
+
+<!-- Save toast -->
+<div id="saveIndicator">✓ تم الحفظ</div>
+
+<!-- App -->
+<div id="app" style="display:none;">
+  <div class="topbar">
+    <h1>LaStella <span>Admin</span></h1>
+    <div class="topbar-actions">
+      <button class="btn btn-outline" id="reloadBtn">↻ إعادة تحميل</button>
+      <button class="btn btn-green"   id="saveBtn">💾 حفظ التغييرات</button>
+      <button class="btn btn-outline" onclick="logout()" style="color:var(--bad);border-color:var(--bad);">خروج</button>
+    </div>
+  </div>
+
+  <div class="shell">
+
+    <!-- LEFT: item list -->
+    <div class="card">
+      <div class="card-title">الأصناف</div>
+      <div class="sec-tabs" id="secTabs"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>صورة</th><th class="name-cell">الاسم</th><th>السعر</th></tr>
+          </thead>
+          <tbody id="itemsTbody"></tbody>
+        </table>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-outline" id="newItemBtn">+ صنف جديد</button>
+        <button class="btn btn-red"     id="deleteItemBtn">🗑 حذف المحدد</button>
+        <button class="btn btn-outline" id="cleanupImagesBtn">تنظيف الصور غير المستخدمة</button>
+      </div>
+      <div class="category-notes">
+        <div class="card-title">وصف القسم</div>
+        <div class="hint">هذه النصوص تظهر تحت اسم القسم في المنيو حسب اللغة المختارة.</div>
+        <div class="category-notes-grid">
+          <div class="field">
+            <label>وصف القسم بالعربي</label>
+            <textarea id="catNoteAr" rows="2" dir="rtl"></textarea>
+          </div>
+          <div class="field">
+            <label>Category description in English</label>
+            <textarea id="catNoteEn" rows="2" dir="ltr"></textarea>
+          </div>
+          <div class="field">
+            <label>תיאור הקטגוריה בעברית</label>
+            <textarea id="catNoteHe" rows="2" dir="rtl"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="statusbar" id="statusBox"></div>
+    </div>
+
+    <!-- RIGHT: edit form -->
+    <div class="card">
+      <div class="card-title" id="formTitle">تعديل صنف</div>
+      <div class="hint">التغييرات تُحفظ في الذاكرة أولاً. اضغط <strong>حفظ التغييرات</strong> للكتابة على Supabase.</div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>القسم</label>
+          <select id="fSection"></select>
+        </div>
+        <div class="field">
+          <label>السعر (₪) — اتركه فارغاً لـ "حسب الوزن"</label>
+          <input type="number" id="fPrice" min="0" placeholder="مثال: 75" />
+        </div>
+
+        <div class="field span2">
+          <label>الاسم بالعربي *</label>
+          <input type="text" id="fAr" placeholder="مثال: ستيك بورتر هاوس" />
+        </div>
+        <div class="field span2">
+          <label>الاسم بالإنجليزي</label>
+          <input type="text" id="fEn" dir="ltr" placeholder="e.g. Porterhouse Steak" />
+        </div>
+        <div class="field span2">
+          <label>الاسم بالعبري</label>
+          <input type="text" id="fHe" dir="rtl" placeholder="לדוג׳ סטייק פורטרהאוס" />
+        </div>
+
+        <div class="field span2">
+          <label>الصورة — ارفع صورة أو الصق رابط</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="fImage" placeholder="https://... أو ارفع من الزر" style="flex:1;" />
+            <button type="button" class="btn btn-outline" id="uploadImgBtn" style="white-space:nowrap;padding:6px 12px;flex-shrink:0;">
+              📷 رفع صورة
+            </button>
+          </div>
+          <input type="file" id="fImageFile" accept="image/*" style="display:none;" />
+          <img id="imgPreview" class="img-preview" />
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn btn-gold"    id="applyItemBtn">✓ تطبيق</button>
+        <button class="btn btn-outline" id="clearFormBtn">✕ مسح</button>
+      </div>
+      <div class="statusbar" id="formStatus"></div>
+    </div>
+
+  </div>
+
+  <!-- Meal Offers -->
+  <div class="card" style="max-width:1200px;margin:14px auto 0;">
+    <div class="card-title">عروض الوجبات</div>
+    <div class="hint">كل سطر = عرض واحد. اضغط <strong>حفظ العروض</strong> للحفظ على Supabase.</div>
+    <div class="offers-grid">
+      <div class="field">
+        <label>بالعربي — سطر لكل عرض</label>
+        <textarea id="offersAr" rows="6" dir="rtl" placeholder="سلطة لشخص مع وجبة رئيسية — 35 ₪&#10;سلطة لشخص بدون وجبة — 45 ₪"></textarea>
+      </div>
+      <div class="field">
+        <label>بالإنجليزي — one line per offer</label>
+        <textarea id="offersEn" rows="6" dir="ltr" placeholder="Salad per person with a main course — ₪35&#10;Salad per person without a meal — ₪45"></textarea>
+      </div>
+      <div class="field">
+        <label>בעברית — שורה לכל מבצע</label>
+        <textarea id="offersHe" rows="6" dir="rtl" placeholder="סלט לסועד עם מנה עיקרית — 35 ₪&#10;סלט לסועד ללא מנה — 45 ₪"></textarea>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button class="btn btn-gold" id="saveOffersBtn">💾 حفظ العروض</button>
+    </div>
+    <div class="statusbar" id="offersStatus"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+<script>
+// ── State ───────────────────────────────────────────────────────
+let data            = null;
+let activeSectionId = null;
+let selectedItemId  = null;
+let isNew           = false;
+let deletedItems    = [];
+let originalSnapshot = { categories: new Map(), items: new Map() };
+let currentOffers = { ar: [], en: [], he: [] };
+let pendingUploads = new Map();
+const BACKUP_BUCKET = 'backups';
+const BACKUP_PREFIX = 'menu-backup-';
+const MAX_BACKUPS = 10;
+const BACKUP_TEMPLATE_VERSION = 'lastella-backup-v4';
+
+// ── DOM refs ────────────────────────────────────────────────────
+const secTabs    = document.getElementById('secTabs');
+const itemsTbody = document.getElementById('itemsTbody');
+const statusBox  = document.getElementById('statusBox');
+const formStatus = document.getElementById('formStatus');
+const fSection   = document.getElementById('fSection');
+const fPrice     = document.getElementById('fPrice');
+const fAr        = document.getElementById('fAr');
+const fEn        = document.getElementById('fEn');
+const fHe        = document.getElementById('fHe');
+const fImage     = document.getElementById('fImage');
+const imgPreview = document.getElementById('imgPreview');
+const catNoteAr  = document.getElementById('catNoteAr');
+const catNoteEn  = document.getElementById('catNoteEn');
+const catNoteHe  = document.getElementById('catNoteHe');
+
+// ── Auth ────────────────────────────────────────────────────────
+async function login() {
+  const email    = document.getElementById('gateEmail').value.trim();
+  const password = document.getElementById('gatePassword').value;
+  const errEl    = document.getElementById('gateErr');
+  const loginBtn = document.getElementById('loginBtn');
+
+  if (!email || !password) {
+    errEl.textContent = 'أدخل البريد الإلكتروني وكلمة المرور.';
+    return;
+  }
+
+  errEl.textContent  = 'جارٍ تسجيل الدخول...';
+  loginBtn.disabled  = true;
+
+  const { error } = await db.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    errEl.textContent = 'فشل تسجيل الدخول: ' + error.message;
+    loginBtn.disabled = false;
+    return;
+  }
+
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display  = 'block';
+  loadData();
+}
+
+async function logout() {
+  await db.auth.signOut();
+  document.getElementById('gate').style.display = 'flex';
+  document.getElementById('app').style.display  = 'none';
+  document.getElementById('gatePassword').value = '';
+  document.getElementById('gateErr').textContent = '';
+}
+
+// Auto-restore session if already logged in
+(async () => {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display  = 'block';
+    loadData();
+  }
+})();
+
+['gateEmail', 'gatePassword'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+});
+
+// ── Load from Supabase ───────────────────────────────────────────
+async function loadData() {
+  setStatus('جارٍ تحميل البيانات...', 'warn');
+  try {
+    const [catRes, itemRes, settingsRes] = await Promise.all([
+      db.from('categories')
+        .select('id,name_ar,name_en,name_he,note_ar,note_en,note_he,tag,sort_order,is_active')
+        .order('sort_order', { ascending: true }),
+      db.from('menu_items')
+        .select('id,category_id,name_ar,name_en,name_he,description_ar,description_en,description_he,price,price_label,image_url,sort_order,is_available')
+        .order('sort_order', { ascending: true }),
+      db.from('settings').select('value').eq('key', 'meal_offers').maybeSingle()
+    ]);
+
+    if (catRes.error)  throw catRes.error;
+    if (itemRes.error) throw itemRes.error;
+
+    const cats  = catRes.data  || [];
+    const items = itemRes.data || [];
+
+    data = {
+      sections: cats.map(cat => ({
+        id:    cat.id,
+        label: { ar: cat.name_ar, en: cat.name_en, he: cat.name_he },
+        tag:   cat.tag   || '',
+        note:  { ar: cat.note_ar || '', en: cat.note_en || '', he: cat.note_he || '' },
+        is_active: cat.is_active !== false,
+        items: items
+          .filter(i => i.category_id === cat.id)
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map(i => ({
+            id:           i.id,
+            ar:           i.name_ar       || '',
+            en:           i.name_en       || '',
+            he:           i.name_he       || '',
+            price:        i.price,
+            priceLabel:   i.price_label   || '',
+            image:        i.image_url     || '',
+            sort_order:   i.sort_order,
+            is_available: i.is_available
+          }))
+      }))
+    };
+
+    deletedItems    = [];
+    pendingUploads.clear();
+    originalSnapshot = createSnapshot(data);
+    activeSectionId = data.sections[0]?.id || null;
+    renderAll();
+    renderOffers(settingsRes.data?.value || null);
+    setStatus('تم التحميل. عدد الأصناف: ' + countItems(), 'ok');
+  } catch (err) {
+    console.error('loadData error:', err);
+    setStatus('✗ خطأ في التحميل: ' + err.message, 'bad');
+  }
+}
+
+function countItems() {
+  return data.sections.reduce((n, s) => n + s.items.length, 0);
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function renderAll() {
+  renderSectionTabs();
+  renderSectionSelect();
+  renderSectionDetails();
+  renderTable();
+}
+
+function renderSectionTabs() {
+  secTabs.innerHTML = '';
+  data.sections.forEach(sec => {
+    const btn = document.createElement('button');
+    btn.className = 'sec-tab' + (sec.id === activeSectionId ? ' active' : '');
+    btn.textContent = sec.label.ar + ' (' + sec.items.length + ')';
+    btn.addEventListener('click', () => {
+      activeSectionId = sec.id;
+      selectedItemId  = null;
+      renderAll();
+    });
+    secTabs.appendChild(btn);
+  });
+}
+
+function renderSectionSelect() {
+  fSection.innerHTML = '';
+  data.sections.forEach(sec => {
+    const opt = document.createElement('option');
+    opt.value       = sec.id;
+    opt.textContent = sec.label.ar;
+    fSection.appendChild(opt);
+  });
+  if (activeSectionId) fSection.value = activeSectionId;
+}
+
+function renderSectionDetails() {
+  const sec = data.sections.find(s => s.id === activeSectionId);
+  catNoteAr.value = sec?.note?.ar || '';
+  catNoteEn.value = sec?.note?.en || '';
+  catNoteHe.value = sec?.note?.he || '';
+}
+
+function renderTable() {
+  itemsTbody.innerHTML = '';
+  const sec = data.sections.find(s => s.id === activeSectionId);
+  if (!sec) return;
+
+  sec.items.forEach((item, i) => {
+    const tr = document.createElement('tr');
+    if (item.id === selectedItemId) tr.classList.add('selected');
+
+    const priceText = item.priceLabel
+      ? item.priceLabel
+      : (item.price != null ? '₪' + item.price : '—');
+
+    const indexTd = document.createElement('td');
+    indexTd.textContent = String(i + 1);
+
+    const imageTd = document.createElement('td');
+    if (item.image) {
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.src = item.image;
+      img.alt = '';
+      img.onerror = () => { img.style.display = 'none'; };
+      imageTd.appendChild(img);
+    } else {
+      imageTd.textContent = '—';
+    }
+
+    const nameTd = document.createElement('td');
+    nameTd.className = 'name-cell';
+    nameTd.textContent = item.ar || '';
+
+    const priceTd = document.createElement('td');
+    priceTd.textContent = priceText;
+
+    tr.append(indexTd, imageTd, nameTd, priceTd);
+    tr.addEventListener('click', () => selectItem(item.id));
+    itemsTbody.appendChild(tr);
+  });
+}
+
+// ── Form ─────────────────────────────────────────────────────────
+function selectItem(id) {
+  isNew          = false;
+  selectedItemId = id;
+  const item = findItem(id);
+  if (!item) return;
+
+  document.getElementById('formTitle').textContent = 'تعديل صنف';
+  fSection.value = findSectionByItemId(id)?.id || activeSectionId;
+  fAr.value    = item.ar    || '';
+  fEn.value    = item.en    || '';
+  fHe.value    = item.he    || '';
+  fPrice.value = item.price != null ? item.price : '';
+  fImage.value = item.image || '';
+  updatePreview();
+  renderTable();
+  setFormStatus('تم تحميل الصنف للتعديل.', 'ok');
+}
+
+function findItem(id) {
+  for (const sec of data.sections)
+    for (const item of sec.items)
+      if (item.id === id) return item;
+  return null;
+}
+
+function findSectionByItemId(id) {
+  return data.sections.find(s => s.items.some(i => i.id === id)) || null;
+}
+
+function clearForm() {
+  isNew          = false;
+  selectedItemId = null;
+  document.getElementById('formTitle').textContent = 'تعديل صنف';
+  fAr.value = fEn.value = fHe.value = fPrice.value = fImage.value = '';
+  imgPreview.style.display = 'none';
+  renderTable();
+  setFormStatus('', '');
+}
+
+function updatePreview() {
+  const src = fImage.value.trim();
+  if (src) {
+    imgPreview.src = src;
+    imgPreview.style.display = 'block';
+    imgPreview.onerror = () => { imgPreview.style.display = 'none'; };
+  } else {
+    imgPreview.style.display = 'none';
+  }
+}
+
+fImage.addEventListener('input', updatePreview);
+
+// ── Image Upload ─────────────────────────────────────────────────
+document.getElementById('uploadImgBtn').addEventListener('click', () => {
+  document.getElementById('fImageFile').click();
+});
+
+document.getElementById('fImageFile').addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file) return;
+  this.value = '';
+
+  const uploadBtn = document.getElementById('uploadImgBtn');
+  uploadBtn.disabled = true;
+  setFormStatus('جارٍ رفع الصورة إلى Supabase...', 'warn');
+
+  try {
+    const pendingKey = getPendingUploadKey();
+    const url = await uploadImageToSupabase(file);
+    await replacePendingUpload(pendingKey, url);
+    fImage.value = url;
+    updatePreview();
+    syncSelectedItemFromForm();
+    setFormStatus('✓ تم رفع الصورة بنجاح.', 'ok');
+  } catch (err) {
+    console.error('Image upload error:', err);
+    setFormStatus('✗ فشل رفع الصورة: ' + err.message, 'bad');
+  } finally {
+    uploadBtn.disabled = false;
+  }
+});
+
+async function uploadImageToSupabase(file) {
+  const maxSize = 2 * 1024 * 1024;
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error('نوع الصورة غير مدعوم. استخدم JPG أو PNG أو WebP.');
+  }
+
+  if (file.size > maxSize) {
+    throw new Error('الصورة كبيرة جداً. الحد الأقصى 2MB.');
+  }
+
+  const ext      = file.name.split('.').pop().toLowerCase();
+  const fileName = Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+
+  const { error: uploadError } = await db.storage
+    .from('images')
+    .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  const { data: { publicUrl } } = db.storage.from('images').getPublicUrl(fileName);
+  return publicUrl;
+}
+
+// ── Apply (save to local state) ───────────────────────────────────
+function applyItem() {
+  return applyItemToState(true);
+}
+
+function applyItemToState(showMessages = true) {
+  const ar    = fAr.value.trim();
+  const en    = fEn.value.trim();
+  const he    = fHe.value.trim();
+  const price = fPrice.value.trim();
+  const image = fImage.value.trim();
+  const secId = fSection.value;
+
+  if (!ar) { if (showMessages) setFormStatus('الاسم بالعربي مطلوب.', 'bad'); return false; }
+
+  const targetSec = data.sections.find(s => s.id === secId);
+  if (!targetSec) { if (showMessages) setFormStatus('القسم غير موجود.', 'bad'); return false; }
+
+  if (isNew || !selectedItemId) {
+    const newItem = {
+      id:           'new_' + Date.now(),
+      ar, en, he,
+      price:        price !== '' ? Number(price) : null,
+      priceLabel:   price === '' ? 'حسب الوزن' : '',
+      image,
+      sort_order:   targetSec.items.length + 1,
+      is_available: true
+    };
+    targetSec.items.push(newItem);
+    movePendingUploadKey('new-form', newItem.id);
+    selectedItemId  = newItem.id;
+    activeSectionId = secId;
+    isNew           = false;
+    if (showMessages) setFormStatus('تم إضافة الصنف الجديد في الذاكرة.', 'ok');
+  } else {
+    const oldSec = findSectionByItemId(selectedItemId);
+    const item   = findItem(selectedItemId);
+    if (!item) return false;
+
+    item.ar         = ar;
+    item.en         = en;
+    item.he         = he;
+    item.price      = price !== '' ? Number(price) : null;
+    item.priceLabel = price === '' ? 'حسب الوزن' : '';
+    item.image      = image;
+
+    if (oldSec && oldSec.id !== secId) {
+      oldSec.items    = oldSec.items.filter(i => i.id !== selectedItemId);
+      targetSec.items.push(item);
+      activeSectionId = secId;
+    }
+    if (showMessages) setFormStatus('تم حفظ التعديلات في الذاكرة.', 'ok');
+  }
+
+  renderAll();
+  if (showMessages) setStatus('تغييرات غير محفوظة — اضغط 💾 حفظ التغييرات', 'warn');
+  return true;
+}
+
+function syncSelectedItemFromForm() {
+  if (!selectedItemId || isNew) return;
+
+  const item = findItem(selectedItemId);
+  if (!item) return;
+
+  item.ar = fAr.value.trim();
+  item.en = fEn.value.trim();
+  item.he = fHe.value.trim();
+  item.price = fPrice.value.trim() !== '' ? Number(fPrice.value.trim()) : null;
+  item.priceLabel = fPrice.value.trim() === '' ? 'حسب الوزن' : '';
+  item.image = fImage.value.trim();
+
+  renderTable();
+  setStatus('تغييرات غير محفوظة — اضغط 💾 حفظ التغييرات', 'warn');
+}
+
+// ── Delete from local state ───────────────────────────────────────
+function deleteItem() {
+  if (!selectedItemId) { setStatus('لم يتم تحديد صنف.', 'warn'); return; }
+  const item = findItem(selectedItemId);
+  if (!item) return;
+  if (!confirm('هل أنت متأكد من حذف:\n' + item.ar + '؟')) return;
+
+  if (!selectedItemId.startsWith('new_')) {
+    deletedItems.push({ id: selectedItemId, image: item.image || '' });
+  }
+
+  for (const sec of data.sections) {
+    sec.items = sec.items.filter(i => i.id !== selectedItemId);
+  }
+  selectedItemId = null;
+  clearForm();
+  renderAll();
+  setStatus('تم حذف الصنف — اضغط 💾 حفظ التغييرات', 'warn');
+}
+
+function buildCategoryPayload(sec, index) {
+  return {
+    note_ar: sec.note?.ar || '',
+    note_en: sec.note?.en || '',
+    note_he: sec.note?.he || '',
+    sort_order: index + 1
+  };
+}
+
+function buildItemPayload(sec, item, index) {
+  return {
+    category_id:  sec.id,
+    name_ar:      item.ar,
+    name_en:      item.en          || '',
+    name_he:      item.he          || '',
+    price:        item.price,
+    price_label:  item.priceLabel  || '',
+    image_url:    item.image       || '',
+    sort_order:   index + 1,
+    is_available: item.is_available !== false
+  };
+}
+
+function createSnapshot(menuData) {
+  const snapshot = { categories: new Map(), items: new Map() };
+
+  menuData.sections.forEach((sec, secIndex) => {
+    snapshot.categories.set(sec.id, JSON.stringify(buildCategoryPayload(sec, secIndex)));
+    sec.items.forEach((item, itemIndex) => {
+      if (!item.id.startsWith('new_')) {
+        snapshot.items.set(item.id, JSON.stringify(buildItemPayload(sec, item, itemIndex)));
+      }
+    });
+  });
+
+  return snapshot;
+}
+
+function getStoragePathFromPublicUrl(url) {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const marker = '/storage/v1/object/public/images/';
+    const markerIndex = parsed.pathname.indexOf(marker);
+    if (markerIndex === -1) return null;
+
+    return decodeURIComponent(parsed.pathname.slice(markerIndex + marker.length));
+  } catch {
+    return null;
+  }
+}
+
+async function removeStoredImage(url) {
+  const path = getStoragePathFromPublicUrl(url);
+  if (!path) return { removed: false, skipped: true, error: null };
+
+  const { error } = await db.storage.from('images').remove([path]);
+  if (error) {
+    console.warn('Failed to remove old image:', error.message);
+    return { removed: false, skipped: false, error };
+  }
+
+  return { removed: true, skipped: false, error: null };
+}
+
+function getPendingUploadKey() {
+  if (selectedItemId) return selectedItemId;
+  if (isNew) return 'new-form';
+  return null;
+}
+
+async function replacePendingUpload(key, newUrl) {
+  if (!key || !newUrl) return;
+
+  const previousUrl = pendingUploads.get(key);
+  if (previousUrl && previousUrl !== newUrl) {
+    await removeStoredImage(previousUrl);
+  }
+
+  pendingUploads.set(key, newUrl);
+}
+
+function movePendingUploadKey(oldKey, newKey) {
+  if (!oldKey || !newKey || oldKey === newKey || !pendingUploads.has(oldKey)) return;
+
+  const url = pendingUploads.get(oldKey);
+  pendingUploads.delete(oldKey);
+  pendingUploads.set(newKey, url);
+}
+
+function getUsedImagePaths() {
+  const paths = new Set();
+
+  (data?.sections || []).forEach(sec => {
+    (sec.items || []).forEach(item => {
+      const path = getStoragePathFromPublicUrl(item.image);
+      if (path) paths.add(path);
+    });
+  });
+
+  return paths;
+}
+
+async function listAllStorageFiles(bucketName, prefix = '') {
+  const limit = 100;
+  let offset = 0;
+  const files = [];
+
+  while (true) {
+    const { data: page, error } = await db.storage
+      .from(bucketName)
+      .list(prefix, {
+        limit,
+        offset,
+        sortBy: { column: 'name', order: 'asc' }
+      });
+
+    if (error) throw error;
+    if (!page || page.length === 0) break;
+
+    for (const entry of page) {
+      const path = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.id === null) {
+        files.push(...await listAllStorageFiles(bucketName, path));
+      } else {
+        files.push({ ...entry, path });
+      }
+    }
+
+    if (page.length < limit) break;
+    offset += limit;
+  }
+
+  return files;
+}
+
+async function cleanupUnusedImages() {
+  const btn = document.getElementById('cleanupImagesBtn');
+  btn.disabled = true;
+  setStatus('جارٍ فحص الصور غير المستخدمة...', 'warn');
+
+  try {
+    if (!data) await loadData();
+
+    const usedPaths = getUsedImagePaths();
+    const pendingPaths = new Set(
+      Array.from(pendingUploads.values())
+        .map(getStoragePathFromPublicUrl)
+        .filter(Boolean)
+    );
+    const allFiles = await listAllStorageFiles('images');
+    const cutoff = Date.now() - 60 * 60 * 1000;
+    const unused = allFiles
+      .filter(file => {
+        if (usedPaths.has(file.path) || pendingPaths.has(file.path)) return false;
+        const createdAt = new Date(file.created_at || file.updated_at || 0).getTime();
+        return Number.isFinite(createdAt) && createdAt < cutoff;
+      })
+      .map(file => file.path);
+
+    if (unused.length === 0) {
+      setStatus('✓ لا توجد صور غير مستخدمة أقدم من ساعة.', 'ok');
+      return;
+    }
+
+    if (!confirm(`سيتم حذف ${unused.length} صورة غير مستخدمة. هل تريد المتابعة؟`)) {
+      setStatus('تم إلغاء تنظيف الصور.', 'warn');
+      return;
+    }
+
+    const { error } = await db.storage.from('images').remove(unused);
+    if (error) throw error;
+
+    setStatus(`✓ تم حذف ${unused.length} صورة غير مستخدمة.`, 'ok');
+  } catch (err) {
+    console.error('cleanupUnusedImages error:', err);
+    setStatus('✗ فشل تنظيف الصور: ' + err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Save to Supabase ──────────────────────────────────────────────
+async function saveToSupabase() {
+  if ((selectedItemId || isNew) && fAr.value.trim()) {
+    const applied = applyItemToState(false);
+    if (!applied) return;
+  }
+
+  setStatus('جارٍ الحفظ على Supabase...', 'warn');
+  document.getElementById('saveBtn').disabled = true;
+
+  try {
+    let categoryUpdates = 0;
+    let itemInserts = 0;
+    let itemUpdates = 0;
+    let itemDeletes = 0;
+    let imageDeletes = 0;
+    let imageDeleteFailures = 0;
+
+    // Update only changed category descriptions/order
+    for (let i = 0; i < data.sections.length; i++) {
+      const sec = data.sections[i];
+      const categoryPayload = buildCategoryPayload(sec, i);
+      const before = originalSnapshot.categories.get(sec.id);
+
+      if (before === JSON.stringify(categoryPayload)) continue;
+
+      const { error } = await db
+        .from('categories').update(categoryPayload).eq('id', sec.id);
+      if (error) throw error;
+      categoryUpdates++;
+    }
+
+    // Delete removed items
+    for (const deleted of deletedItems) {
+      const { error } = await db.from('menu_items').delete().eq('id', deleted.id);
+      if (error) throw error;
+      const imageResult = await removeStoredImage(deleted.image);
+      if (imageResult.removed) imageDeletes++;
+      if (imageResult.error) imageDeleteFailures++;
+      itemDeletes++;
+    }
+
+    // Insert new / update existing
+    for (const sec of data.sections) {
+      for (let i = 0; i < sec.items.length; i++) {
+        const item      = sec.items[i];
+        const isNewItem = item.id.startsWith('new_');
+        const payload = buildItemPayload(sec, item, i);
+
+        if (isNewItem) {
+          const { data: inserted, error } = await db
+            .from('menu_items').insert(payload).select().single();
+          if (error) throw error;
+          movePendingUploadKey(item.id, inserted.id);
+          item.id = inserted.id;
+          itemInserts++;
+        } else {
+          const before = originalSnapshot.items.get(item.id);
+          if (before === JSON.stringify(payload)) continue;
+
+          const oldPayload = before ? JSON.parse(before) : null;
+          const { error } = await db
+            .from('menu_items').update(payload).eq('id', item.id);
+          if (error) throw error;
+
+          if (oldPayload?.image_url && oldPayload.image_url !== payload.image_url) {
+            const imageResult = await removeStoredImage(oldPayload.image_url);
+            if (imageResult.removed) imageDeletes++;
+            if (imageResult.error) imageDeleteFailures++;
+          }
+          itemUpdates++;
+        }
+      }
+    }
+
+    deletedItems = [];
+    pendingUploads.clear();
+    originalSnapshot = createSnapshot(data);
+    showToast();
+    const backupPath = await saveBackupMenuToStorage();
+    const totalChanges = categoryUpdates + itemInserts + itemUpdates + itemDeletes;
+    const totalBackupItems = data.sections.reduce((sum, sec) =>
+      sec.is_active === false ? sum : sum + sec.items.filter(item => item.is_available !== false).length, 0);
+    const imageStatus = imageDeleteFailures
+      ? `، صور محذوفة: ${imageDeletes}، فشل حذف صور: ${imageDeleteFailures}`
+      : `، صور محذوفة: ${imageDeletes}`;
+    setStatus(`✓ تم الحفظ. تغييرات: ${totalChanges}، أقسام: ${categoryUpdates}، جديد: ${itemInserts}، تعديل: ${itemUpdates}، حذف: ${itemDeletes}${imageStatus}. عناصر النسخة: ${totalBackupItems}. النسخة: ${backupPath}`, imageDeleteFailures ? 'warn' : 'ok');
+  } catch (err) {
+    console.error('Save error:', err);
+    setStatus('✗ فشل الحفظ: ' + err.message, 'bad');
+  } finally {
+    document.getElementById('saveBtn').disabled = false;
+  }
+}
+
+// ── Meal Offers ───────────────────────────────────────────────────
+function renderOffers(value) {
+  currentOffers = value || { ar: [], en: [], he: [] };
+  document.getElementById('offersAr').value = (currentOffers.ar || []).join('\n');
+  document.getElementById('offersEn').value = (currentOffers.en || []).join('\n');
+  document.getElementById('offersHe').value = (currentOffers.he || []).join('\n');
+}
+
+async function saveOffers() {
+  const toLines = id => document.getElementById(id).value
+    .split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+  const value = { ar: toLines('offersAr'), en: toLines('offersEn'), he: toLines('offersHe') };
+  currentOffers = value;
+
+  const btn = document.getElementById('saveOffersBtn');
+  btn.disabled = true;
+  setInlineStatus(document.getElementById('offersStatus'), 'جارٍ الحفظ...', 'warn');
+
+  try {
+    const { error } = await db.from('settings')
+      .upsert({ key: 'meal_offers', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+
+    if (error) throw error;
+
+    showToast();
+    const backupPath = await saveBackupMenuToStorage();
+    setInlineStatus(document.getElementById('offersStatus'), '✓ تم حفظ العروض على Supabase.', 'ok');
+    setStatus(`✓ تم تحديث نسخة احتياطية: ${backupPath}`, 'ok');
+  } catch (err) {
+    setInlineStatus(document.getElementById('offersStatus'), '✗ فشل: ' + err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function updateActiveSectionNotes() {
+  const sec = data?.sections?.find(s => s.id === activeSectionId);
+  if (!sec) return;
+
+  sec.note = {
+    ar: catNoteAr.value.trim(),
+    en: catNoteEn.value.trim(),
+    he: catNoteHe.value.trim()
+  };
+
+  setStatus('تغييرات غير محفوظة — اضغط 💾 حفظ التغييرات', 'warn');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function getOfferLinesFromForm() {
+  const toLines = id => document.getElementById(id).value
+    .split('\n').map(line => line.trim()).filter(Boolean);
+
+  const value = {
+    ar: toLines('offersAr'),
+    en: toLines('offersEn'),
+    he: toLines('offersHe')
+  };
+
+  currentOffers = value;
+  return value;
+}
+
+function buildBackupPayload() {
+  const sections = (data?.sections || [])
+    .filter(sec => sec.is_active !== false)
+    .map(sec => ({
+      id: sec.id,
+      label: sec.label,
+      tag: sec.tag || '',
+      note: sec.note || { ar: '', en: '', he: '' },
+      items: (sec.items || [])
+        .filter(item => item.is_available !== false)
+        .map(item => ({
+          id: item.id,
+          ar: item.ar || '',
+          en: item.en || '',
+          he: item.he || '',
+          price: item.price,
+          priceLabel: item.priceLabel || '',
+          image: item.image || '',
+          is_available: item.is_available !== false
+        }))
+    }));
+  const offers = getOfferLinesFromForm();
+
+  return {
+    generatedAt: new Date().toISOString(),
+    offers,
+    sections
+  };
+}
+
+function buildBackupMenuHtml() {
+  const backupData = buildBackupPayload();
+  const payload = JSON.stringify(backupData).replace(/</g, '\\u003c');
+  const logoUrl = new URL('images/lastella-logo.png', window.location.href).href;
+  const htmlEsc = value => String(value || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const textAr = obj => obj?.ar || '';
+  const initialSectionId = backupData.sections[0]?.id || '';
+  const initialCategories = backupData.sections.map(sec =>
+    `<div class="category-pill${sec.id === initialSectionId ? ' active' : ''}" data-section="${htmlEsc(sec.id)}">${htmlEsc(textAr(sec.label))}</div>`
+  ).join('');
+  const initialOffers = (backupData.offers.ar || []).map(line => `<li>${htmlEsc(line)}</li>`).join('');
+  const initialSections = backupData.sections.map(sec => {
+    const items = (sec.items || []).map(item => {
+      const price = item.priceLabel || (item.price != null ? '₪' + Number(item.price).toLocaleString() : '—');
+      const name = htmlEsc(textAr(item));
+      return `<article class="menu-item"><div class="item-main"><div class="item-name-row"><span class="item-name">${name}</span></div>${item.image ? `<img class="item-photo" src="${htmlEsc(item.image)}" alt="${name}" loading="lazy" onerror="this.style.display='none'" />` : ''}</div><div class="item-price">${htmlEsc(price)}</div></article>`;
+    }).join('');
+
+    return `<section class="menu-section${sec.id === initialSectionId ? ' active-section' : ''}" id="sec-${htmlEsc(sec.id)}"><div class="section-header"><h2 class="section-title">${htmlEsc(textAr(sec.label))}<span class="dot">•</span></h2><div class="section-tag">${htmlEsc(sec.tag || '')}</div></div>${textAr(sec.note) ? `<p class="section-note">${htmlEsc(textAr(sec.note))}</p>` : ''}<div style="margin-top:22px"></div>${items}</section>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>LaStella - قائمة المطعم</title>
+  <meta name="lastella-backup-template" content="${BACKUP_TEMPLATE_VERSION}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg:#05050a; --bg-soft:#10101a; --card:#171724;
+      --accent:#d4a258; --accent-soft:rgba(212,162,88,.18);
+      --accent-strong:rgba(212,162,88,.35); --text-main:#fff;
+      --text-muted:#b6b6c8; --border-soft:#282838;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+    body{background:radial-gradient(circle at top,#171724 0,#030307 45%,#000 100%);color:var(--text-main);min-height:100vh;padding:12px;}
+    .page{max-width:960px;margin:0 auto 48px auto;position:relative;}
+    .lang-switch{position:absolute;top:10px;left:12px;display:flex;gap:6px;z-index:20;}
+    .lang-pill{padding:4px 10px;border-radius:999px;border:1px solid var(--border-soft);background:rgba(0,0,0,.7);color:var(--text-muted);font-size:11px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .lang-pill.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-strong);}
+    .preload{position:relative;margin-top:48px;margin-bottom:20px;border-radius:26px;padding:24px 18px 26px;background:radial-gradient(circle at top right,rgba(212,162,88,.35),transparent 55%),linear-gradient(145deg,#11111c,#05050a);border:1px solid var(--accent-strong);box-shadow:0 20px 55px rgba(0,0,0,.75);overflow:hidden;}
+    .hero-logo{position:absolute;top:16px;right:18px;width:96px;height:auto;opacity:.98;pointer-events:none;}
+    .intro-text{margin-top:120px;color:var(--text-muted);font-size:14px;line-height:1.7;}
+    .preload-actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+    .btn-primary{padding:9px 20px;border-radius:999px;border:none;cursor:pointer;background:var(--accent);color:#120f0b;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(212,162,88,.6);display:inline-flex;align-items:center;gap:6px;}
+    .category-strip{margin:18px 0 12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+    .category-pill{padding:6px 14px;border-radius:999px;border:1px solid var(--border-soft);background:#070712;color:var(--text-muted);font-size:13px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .category-pill.active,.category-pill:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-strong);}
+    .meal-offers{width:min(100%,520px);margin:16px auto 0;padding:12px 18px;border-radius:14px;background:rgba(0,0,0,0.35);border:1px dashed rgba(212,162,88,0.5);text-align:center;}
+    .meal-offers-title{font-size:13px;color:var(--accent);margin-bottom:6px;text-align:center;}
+    .meal-offers-list{list-style:none;padding:0;margin:0;}
+    .meal-offers-list li{font-size:12px;color:var(--text-muted);margin-bottom:3px;line-height:1.5;text-align:center;}
+    .sections-wrapper{position:relative;min-height:200px;}
+    .menu-section{margin-bottom:26px;padding:18px 16px 12px;border-radius:22px;background:linear-gradient(145deg,#10101c,#060610);border:1px solid var(--border-soft);box-shadow:0 16px 35px rgba(0,0,0,.7);display:none;}
+    .menu-section.active-section{display:block;}
+    .section-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+    .section-title{font-size:18px;}
+    .section-title .dot{color:var(--accent);margin-inline-start:6px;}
+    .section-tag{font-size:11px;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
+    .section-note{font-size:12px;color:var(--text-muted);margin-bottom:10px;}
+    .menu-item{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:4px;padding:10px 0;border-bottom:1px dashed rgba(130,130,150,.45);}
+    .menu-item:last-child{border-bottom:none;padding-bottom:0;}
+    .item-main{min-width:0;}
+    .item-name-row{display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+    .item-name{font-size:15px;font-weight:600;}
+    .item-price{font-size:15px;font-weight:600;white-space:nowrap;text-align:left;align-self:center;}
+    .item-photo{width:100%;max-width:220px;height:140px;border-radius:18px;margin-top:6px;object-fit:cover;display:block;border:1px solid var(--border-soft);}
+    .loading-text{text-align:center;color:var(--text-muted);font-size:14px;padding:40px 0;}
+    @media(max-width:600px){body{padding:10px;}.preload{padding-inline:14px;}.hero-logo{width:78px;top:14px;right:14px;}.menu-section{padding-inline:12px;}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="lang-switch">
+      <button class="lang-pill active" data-lang="ar">العربية</button>
+      <button class="lang-pill" data-lang="he">עברית</button>
+      <button class="lang-pill" data-lang="en">English</button>
+    </div>
+    <section class="preload">
+      <img src="${logoUrl}" alt="La Stella" class="hero-logo" onerror="this.style.display='none'" />
+      <p class="intro-text" id="introText"></p>
+      <div class="preload-actions">
+        <button class="btn-primary" id="goToMenuBtn">
+          <span id="btnLabel">انتقال للمنيو</span>
+          <span>↓</span>
+        </button>
+      </div>
+    </section>
+    <nav class="category-strip" id="categoryStrip">${initialCategories}</nav>
+    <div class="sections-wrapper" id="sectionsWrapper">${initialSections}</div>
+    <div class="meal-offers" id="mealOffersBox">
+      <div class="meal-offers-title" id="mealOffersTitle">عرض الوجبات</div>
+      <ul class="meal-offers-list" id="mealOffersList">${initialOffers}</ul>
+    </div>
+  </div>
+  <script>
+    const MENU_BACKUP = ${payload};
+    const INTRO = {
+      ar: 'أهلاً وسهلاً بكم في <strong>La Stella</strong>، مطعم بتفاصيل راقية ونكهات مشوية على أصولها.',
+      en: 'Welcome to <strong>La Stella</strong>, a restaurant where elegant details meet perfectly grilled flavors.',
+      he: 'ברוכים הבאים ל-<strong>La Stella</strong>, מסעדה שבה פרטים מכובדים נפגשים עם טעמים מושלמים על האש.'
+    };
+    const LANGS = {
+      ar: { dir: 'rtl', btn: 'انتقال للمنيو', offersTitle: 'عرض الوجبات' },
+      he: { dir: 'rtl', btn: 'לפתיחת התפריט', offersTitle: 'מבצעי ארוחות' },
+      en: { dir: 'ltr', btn: 'View the menu', offersTitle: 'Meal Offers' }
+    };
+    const BACKUP_SECTIONS = Array.isArray(MENU_BACKUP.sections) ? MENU_BACKUP.sections : [];
+    const BACKUP_OFFERS = MENU_BACKUP.offers || { ar: [], en: [], he: [] };
+    let currentLang = 'ar';
+    let currentSection = BACKUP_SECTIONS[0]?.id || null;
+
+    function esc(value) {
+      return String(value || '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function textByLang(obj, lang) {
+      return obj?.[lang] || obj?.ar || '';
+    }
+
+    function activateSection(id) {
+      currentSection = id;
+      document.querySelectorAll('.menu-section').forEach(section =>
+        section.classList.toggle('active-section', section.id === 'sec-' + id));
+      document.querySelectorAll('.category-pill').forEach(pill =>
+        pill.classList.toggle('active', pill.dataset.section === id));
+      scrollToCategories();
+    }
+
+    function scrollToCategories() {
+      const el = document.getElementById('categoryStrip');
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 10;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+
+    function render(lang) {
+      try {
+        currentLang = lang;
+        document.documentElement.lang = lang;
+        document.documentElement.dir = LANGS[lang].dir;
+        document.querySelectorAll('.lang-pill').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+        document.getElementById('introText').innerHTML = INTRO[lang] || '';
+        document.getElementById('btnLabel').textContent = LANGS[lang].btn;
+
+        document.getElementById('categoryStrip').innerHTML = BACKUP_SECTIONS.map(sec =>
+          '<div class="category-pill' + (sec.id === currentSection ? ' active' : '') + '" data-section="' + esc(sec.id) + '">' + esc(textByLang(sec.label, lang)) + '</div>'
+        ).join('');
+        document.querySelectorAll('.category-pill').forEach(pill =>
+          pill.addEventListener('click', () => activateSection(pill.dataset.section)));
+
+        document.getElementById('mealOffersTitle').textContent = LANGS[lang].offersTitle;
+        document.getElementById('mealOffersList').innerHTML = (BACKUP_OFFERS[lang] || []).map(line => '<li>' + esc(line) + '</li>').join('');
+
+        document.getElementById('sectionsWrapper').innerHTML = BACKUP_SECTIONS.map(sec => {
+          const note = textByLang(sec.note, lang);
+          const sectionItems = Array.isArray(sec.items) ? sec.items : [];
+          const items = sectionItems.filter(item => item.is_available !== false).map(item => {
+            const price = item.priceLabel || (item.price != null ? '₪' + Number(item.price).toLocaleString() : '—');
+            const name = esc(textByLang(item, lang));
+            return '<article class="menu-item"><div class="item-main"><div class="item-name-row"><span class="item-name">' + name + '</span></div>' +
+              (item.image ? '<img class="item-photo" src="' + esc(item.image) + '" alt="' + name + '" loading="lazy" onerror="this.style.display=\\'none\\'" />' : '') +
+              '</div><div class="item-price">' + esc(price) + '</div></article>';
+          }).join('');
+
+          return '<section class="menu-section' + (sec.id === currentSection ? ' active-section' : '') + '" id="sec-' + esc(sec.id) + '">' +
+            '<div class="section-header"><h2 class="section-title">' + esc(textByLang(sec.label, lang)) + '<span class="dot">•</span></h2>' +
+            '<div class="section-tag">' + esc(sec.tag || '') + '</div></div>' +
+            (note ? '<p class="section-note">' + esc(note) + '</p>' : '') +
+            '<div style="margin-top:22px"></div>' + items + '</section>';
+        }).join('');
+      } catch (err) {
+        console.error('Backup menu render error:', err);
+        document.getElementById('sectionsWrapper').innerHTML =
+          '<p class="loading-text">Backup render error: ' + esc(err.message) + '</p>';
+      }
+    }
+
+    document.getElementById('goToMenuBtn').addEventListener('click', scrollToCategories);
+    document.querySelectorAll('.lang-pill').forEach(btn => btn.addEventListener('click', () => render(btn.dataset.lang)));
+    render('ar');
+  <\/script>
+</body>
+</html>`;
+}
+
+function isMissingStorageObject(error) {
+  const text = String(error?.message || error?.error || error || '').toLowerCase();
+  return error?.statusCode === '404' || error?.statusCode === 404 || text.includes('not found') || text.includes('does not exist');
+}
+
+async function removeAllBackupFiles() {
+  const paths = Array.from({ length: MAX_BACKUPS }, (_, i) => `${BACKUP_PREFIX}${i + 1}.html`);
+  await db.storage.from(BACKUP_BUCKET).remove(paths);
+}
+
+async function ensureCompatibleBackupSet() {
+  const path = `${BACKUP_PREFIX}1.html`;
+  const { data: file, error } = await db.storage.from(BACKUP_BUCKET).download(path);
+
+  if (error) {
+    if (!isMissingStorageObject(error)) console.warn('Could not inspect existing backup:', error.message);
+    return;
+  }
+
+  const html = await file.text();
+  if (!html.includes(BACKUP_TEMPLATE_VERSION)) {
+    await removeAllBackupFiles();
+  }
+}
+
+async function rotateBackupFiles() {
+  const storage = db.storage.from(BACKUP_BUCKET);
+
+  await storage.remove([`${BACKUP_PREFIX}${MAX_BACKUPS}.html`]);
+
+  for (let i = MAX_BACKUPS - 1; i >= 1; i--) {
+    const fromPath = `${BACKUP_PREFIX}${i}.html`;
+    const toPath = `${BACKUP_PREFIX}${i + 1}.html`;
+
+    await storage.remove([toPath]);
+    const { error } = await storage.copy(fromPath, toPath);
+    if (error && !isMissingStorageObject(error)) throw error;
+  }
+}
+
+async function saveBackupMenuToStorage() {
+  if (!data?.sections?.length) return;
+
+  await ensureCompatibleBackupSet();
+  await rotateBackupFiles();
+
+  const blob = new Blob([buildBackupMenuHtml()], { type: 'text/html' });
+  const path = `${BACKUP_PREFIX}1.html`;
+  await db.storage.from(BACKUP_BUCKET).remove([path]);
+
+  const { error } = await db.storage
+    .from(BACKUP_BUCKET)
+    .upload(path, blob, {
+      cacheControl: '0',
+      contentType: 'text/html',
+      upsert: true
+    });
+
+  if (error) throw error;
+  return `${BACKUP_BUCKET}/${path}`;
+}
+
+function showToast() {
+  const el = document.getElementById('saveIndicator');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function setStatus(msg, type) {
+  statusBox.replaceChildren();
+  if (!msg) return;
+
+  const span = document.createElement('span');
+  span.className = type;
+  span.textContent = msg;
+  statusBox.appendChild(span);
+}
+
+function setFormStatus(msg, type) {
+  formStatus.replaceChildren();
+  if (!msg) return;
+
+  const span = document.createElement('span');
+  span.className = type;
+  span.textContent = msg;
+  formStatus.appendChild(span);
+}
+
+function setInlineStatus(container, msg, type) {
+  container.replaceChildren();
+  if (!msg) return;
+
+  const span = document.createElement('span');
+  span.className = type;
+  span.textContent = msg;
+  container.appendChild(span);
+}
+
+// ── Event listeners ───────────────────────────────────────────────
+document.getElementById('reloadBtn').addEventListener('click', () => { clearForm(); loadData(); });
+document.getElementById('saveBtn').addEventListener('click', saveToSupabase);
+
+document.getElementById('newItemBtn').addEventListener('click', () => {
+  isNew          = true;
+  selectedItemId = null;
+  document.getElementById('formTitle').textContent = 'إضافة صنف جديد';
+  fAr.value = fEn.value = fHe.value = fPrice.value = fImage.value = '';
+  imgPreview.style.display = 'none';
+  fSection.value = activeSectionId || data?.sections[0]?.id || '';
+  setFormStatus('وضع إضافة — عبئ الحقول واضغط تطبيق.', 'ok');
+  renderTable();
+});
+
+document.getElementById('deleteItemBtn').addEventListener('click', deleteItem);
+document.getElementById('cleanupImagesBtn').addEventListener('click', cleanupUnusedImages);
+document.getElementById('applyItemBtn').addEventListener('click', applyItem);
+document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+document.getElementById('saveOffersBtn').addEventListener('click', saveOffers);
+[fAr, fEn, fHe, fPrice, fImage].forEach(field =>
+  field.addEventListener('input', syncSelectedItemFromForm));
+catNoteAr.addEventListener('input', updateActiveSectionNotes);
+catNoteEn.addEventListener('input', updateActiveSectionNotes);
+catNoteHe.addEventListener('input', updateActiveSectionNotes);
+</script>
+</body>
+</html>
