@@ -377,143 +377,37 @@
 
     render(currentLang);
 
-    const BACKUP_URL = 'https://kira980.github.io/backup/';
-    const CACHE_KEY = 'lastella_menu_cache_v1';
-    const LIVE_TIMEOUT_MS = 8000;
-
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function withTimeout(promise, ms, label) {
-      const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(label || 'Request timeout')), ms)
-      );
-      return Promise.race([promise, timeout]);
-    }
-
-    function saveMenuCache(payload) {
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          savedAt: Date.now(),
-          payload
-        }));
-      } catch (err) {
-        console.warn('Could not save menu cache:', err);
-      }
-    }
-
-    function loadMenuCache() {
-      try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        return parsed?.payload || null;
-      } catch (err) {
-        console.warn('Could not read menu cache:', err);
-        return null;
-      }
-    }
-
-    function applyMenuPayload(payload) {
-      allCategories = payload.categories || [];
-      allItems = payload.items || [];
-      mealOffers = payload.mealOffers || mealOffers;
-      currentSection = allCategories[0]?.id || null;
-      render(currentLang);
-      revealLoadedMenu();
-    }
-
-    function showFallbackMessage() {
-      document.body.classList.remove('is-loading');
-
-      const screen = document.getElementById('loadingScreen');
-      if (screen) screen.remove();
-
-      const wrapper = document.getElementById('sectionsWrapper');
-      if (wrapper) {
-        wrapper.innerHTML = `
-          <div class="loading-text" style="padding:28px 16px;line-height:1.8">
-            <strong>Connection is slow.</strong><br>
-            تعذّر تحميل القائمة الحيّة حالياً.<br>
-            <a href="${BACKUP_URL}" style="color:#d4a258;text-decoration:underline;font-weight:600">
-              Open backup menu
-            </a>
-          </div>
-        `;
-      }
-    }
-
-    window.addEventListener('error', function (event) {
-      console.error('Global JavaScript error:', event.error || event.message);
-    });
-
-    window.addEventListener('unhandledrejection', function (event) {
-      console.error('Unhandled promise rejection:', event.reason);
-    });
-
     (async function loadMenu() {
       try {
-        setLoadingScreenText('Opening live menu...');
-
-        // If supabase.js or supabase.min.js failed to load, db will not exist.
-        if (typeof db === 'undefined' || !db?.from) {
-          throw new Error('Supabase client is not available');
-        }
-
-        const liveRequest = Promise.all([
+        const [catResult, itemResult, settingsResult] = await Promise.all([
           db.from('categories')
             .select('id,name_ar,name_en,name_he,note_ar,note_en,note_he,tag,sort_order')
             .eq('is_active', true)
             .order('sort_order', { ascending: true }),
-
           db.from('menu_items')
             .select('id,category_id,name_ar,name_en,name_he,description_ar,description_en,description_he,price,price_label,image_url,image_fit,image_zoom,image_pos_x,image_pos_y,sort_order')
             .eq('is_available', true)
             .order('sort_order', { ascending: true }),
-
-          db.from('settings')
-            .select('value')
-            .eq('key', 'meal_offers')
-            .maybeSingle()
+          db.from('settings').select('value').eq('key', 'meal_offers').maybeSingle()
         ]);
 
-        const [catResult, itemResult, settingsResult] =
-          await withTimeout(liveRequest, LIVE_TIMEOUT_MS, 'Supabase live menu timeout');
-
-        if (catResult.error) throw catResult.error;
+        if (catResult.error)  throw catResult.error;
         if (itemResult.error) throw itemResult.error;
 
-        const payload = {
-          categories: catResult.data || [],
-          items: itemResult.data || [],
-          mealOffers: settingsResult.data?.value || mealOffers
-        };
+        if (settingsResult.data?.value) mealOffers = settingsResult.data.value;
 
-        if (!payload.categories.length) {
-          throw new Error('No active categories found');
-        }
+        allCategories  = catResult.data  || [];
+        allItems       = itemResult.data || [];
+        currentSection = allCategories[0]?.id || null;
 
-        saveMenuCache(payload);
-        applyMenuPayload(payload);
-
+        render(currentLang);
+        revealLoadedMenu();
       } catch (err) {
+        window.location.replace("backup.html");
         console.error('LaStella menu load error:', err);
-
-        const cachedPayload = loadMenuCache();
-
-        if (cachedPayload && cachedPayload.categories?.length) {
-          setLoadingScreenText('Opening saved menu...');
-          await sleep(400);
-          applyMenuPayload(cachedPayload);
-          return;
-        }
-
-        setLoadingScreenText('Connection is slow. Opening backup option...');
-        showFallbackMessage();
-
-        // Optional automatic fallback after 10 seconds:
-        // setTimeout(() => window.location.replace(BACKUP_URL), 10000);
+        const loadingEl = document.getElementById('loadingText');
+        if (loadingEl) loadingEl.textContent = LANGS[currentLang].error;
+        setLoadingScreenText(LANGS[currentLang].error);
       }
     })();
   </script>
