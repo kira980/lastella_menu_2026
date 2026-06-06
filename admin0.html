@@ -398,6 +398,11 @@ const ADMIN_USERNAME_EMAILS = {
   admin: 'ahmed.hosh007@gmail.com'
 };
 
+function resetLoginGate() {
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('gateErr').textContent = '';
+}
+
 async function login() {
   const username = document.getElementById('gateUsername').value.trim().toLowerCase();
   const email    = ADMIN_USERNAME_EMAILS[username];
@@ -437,7 +442,7 @@ async function logout() {
   document.getElementById('app').style.display  = 'none';
   document.getElementById('gateUsername').value = '';
   document.getElementById('gatePassword').value = '';
-  document.getElementById('gateErr').textContent = '';
+  resetLoginGate();
 }
 
 // Auto-restore session if already logged in
