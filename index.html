@@ -403,6 +403,7 @@
         render(currentLang);
         revealLoadedMenu();
       } catch (err) {
+        window.location.replace("backup.html");
         console.error('LaStella menu load error:', err);
         const loadingEl = document.getElementById('loadingText');
         if (loadingEl) loadingEl.textContent = LANGS[currentLang].error;
