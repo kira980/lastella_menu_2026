@@ -125,13 +125,13 @@
         </button>
       </div>
     </section>
-    <div class="meal-offers" id="mealOffersBox">
-      <div class="meal-offers-title" id="mealOffersTitle"></div>
-      <ul class="meal-offers-list" id="mealOffersList"></ul>
-    </div>
     <nav class="category-strip" id="categoryStrip"></nav>
     <div class="sections-wrapper" id="sectionsWrapper">
       <p class="loading-text" id="loadingText">Opening menu...</p>
+    </div>
+    <div class="meal-offers" id="mealOffersBox">
+      <div class="meal-offers-title" id="mealOffersTitle"></div>
+      <ul class="meal-offers-list" id="mealOffersList"></ul>
     </div>
   </div>
   <div class="image-lightbox" id="imageLightbox" aria-hidden="true">
@@ -142,12 +142,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="supabase.js"></script>
   <script>
-<<<<<<< HEAD
-    const RESTAURANT_SLUG = window.RESTAURANT_SLUG || new URLSearchParams(location.search).get('restaurant') || new URLSearchParams(location.search).get('business') || 'lastella';
-    let currentRestaurant = null;
-    let currentRestaurantId = null;
-=======
->>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
     const INTRO = {
       ar: 'أهلاً وسهلاً بكم في <strong>La Stella</strong>، مطعم بتفاصيل راقية ونكهات مشوية على أصولها.',
       en: 'Welcome to <strong>La Stella</strong>, a restaurant where elegant details meet perfectly grilled flavors.',
@@ -230,24 +224,6 @@
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-<<<<<<< HEAD
-    function tenantImageUrl(url) {
-      const raw = String(url || '').trim();
-      const slug = currentRestaurant?.slug;
-      if (!raw || !slug) return raw;
-
-      const marker = '/storage/v1/object/public/images/';
-      const markerIndex = raw.indexOf(marker);
-      if (markerIndex === -1) return raw;
-
-      const prefix = raw.slice(0, markerIndex + marker.length);
-      const path = raw.slice(markerIndex + marker.length);
-      if (!path || path.startsWith(`${slug}/`) || path.includes('/')) return raw;
-      return `${prefix}${slug}/${path}`;
-    }
-
-=======
->>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
     function setLoadingScreenText(text) {
       const el = document.getElementById('loadingScreenText');
       if (el) el.textContent = text;
@@ -403,37 +379,16 @@
 
     (async function loadMenu() {
       try {
-<<<<<<< HEAD
-        const restaurantResult = await db.from('restaurant')
-          .select('id,name,slug,menu_url,is_active')
-          .eq('slug', RESTAURANT_SLUG).eq('is_active', true).single();
-        if (restaurantResult.error || !restaurantResult.data) throw new Error('Menu not found or inactive.');
-        currentRestaurant = restaurantResult.data;
-        currentRestaurantId = currentRestaurant.id;
-
         const [catResult, itemResult, settingsResult] = await Promise.all([
           db.from('categories')
             .select('id,name_ar,name_en,name_he,note_ar,note_en,note_he,tag,sort_order')
-            .eq('restaurant_id', currentRestaurantId)
-=======
-        const [catResult, itemResult, settingsResult] = await Promise.all([
-          db.from('categories')
-            .select('id,name_ar,name_en,name_he,note_ar,note_en,note_he,tag,sort_order')
->>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
             .eq('is_active', true)
             .order('sort_order', { ascending: true }),
           db.from('menu_items')
             .select('id,category_id,name_ar,name_en,name_he,description_ar,description_en,description_he,price,price_label,image_url,image_fit,image_zoom,image_pos_x,image_pos_y,sort_order')
-<<<<<<< HEAD
-            .eq('restaurant_id', currentRestaurantId)
-            .eq('is_available', true)
-            .order('sort_order', { ascending: true }),
-          db.from('settings').select('value').eq('restaurant_id', currentRestaurantId).eq('key', 'meal_offers').maybeSingle()
-=======
             .eq('is_available', true)
             .order('sort_order', { ascending: true }),
           db.from('settings').select('value').eq('key', 'meal_offers').maybeSingle()
->>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
         ]);
 
         if (catResult.error)  throw catResult.error;
@@ -442,14 +397,7 @@
         if (settingsResult.data?.value) mealOffers = settingsResult.data.value;
 
         allCategories  = catResult.data  || [];
-<<<<<<< HEAD
-        allItems       = (itemResult.data || []).map(item => ({
-          ...item,
-          image_url: tenantImageUrl(item.image_url)
-        }));
-=======
         allItems       = itemResult.data || [];
->>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
         currentSection = allCategories[0]?.id || null;
 
         render(currentLang);
@@ -457,14 +405,8 @@
       } catch (err) {
         console.error('LaStella menu load error:', err);
         const loadingEl = document.getElementById('loadingText');
-<<<<<<< HEAD
-        const message = err.message === 'Menu not found or inactive.' ? err.message : LANGS[currentLang].error;
-        if (loadingEl) loadingEl.textContent = message;
-        setLoadingScreenText(message);
-=======
         if (loadingEl) loadingEl.textContent = LANGS[currentLang].error;
         setLoadingScreenText(LANGS[currentLang].error);
->>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
       }
     })();
   </script>

@@ -346,8 +346,11 @@
 <script>
 // ── State ───────────────────────────────────────────────────────
 let data            = null;
+<<<<<<< HEAD
 let currentRestaurant = null;
 let currentRestaurantId = null;
+=======
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
 let activeSectionId = null;
 let selectedItemId  = null;
 let draggedItemId   = null;
@@ -357,7 +360,11 @@ let originalSnapshot = { categories: new Map(), items: new Map() };
 let currentOffers = { ar: [], en: [], he: [] };
 let pendingUploads = new Map();
 const BACKUP_BUCKET = 'backups';
+<<<<<<< HEAD
 let BACKUP_PREFIX = 'menu-backup-';
+=======
+const BACKUP_PREFIX = 'menu-backup-';
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
 const MAX_BACKUPS = 10;
 const BACKUP_TEMPLATE_VERSION = 'lastella-backup-v4';
 const PUBLIC_LOGO_URL = 'https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png';
@@ -407,8 +414,12 @@ function resetLoginGate() {
 
 async function login() {
   const username = document.getElementById('gateUsername').value.trim().toLowerCase();
+<<<<<<< HEAD
   // Keep the legacy "admin" alias, while allowing every restaurant owner to use their Auth email.
   const email    = ADMIN_USERNAME_EMAILS[username] || (username.includes('@') ? username : null);
+=======
+  const email    = ADMIN_USERNAME_EMAILS[username];
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
   const password = document.getElementById('gatePassword').value;
   const errEl    = document.getElementById('gateErr');
   const loginBtn = document.getElementById('loginBtn');
@@ -468,6 +479,7 @@ async function logout() {
 async function loadData() {
   setStatus('جارٍ تحميل البيانات...', 'warn');
   try {
+<<<<<<< HEAD
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError || !user) throw userError || new Error('Authentication required.');
     const { data: isGlobalAdmin, error: roleError } = await db.rpc('is_global_admin');
@@ -494,6 +506,16 @@ async function loadData() {
         .eq('restaurant_id', currentRestaurantId)
         .order('sort_order', { ascending: true }),
       db.from('settings').select('value').eq('restaurant_id', currentRestaurantId).eq('key', 'meal_offers').maybeSingle()
+=======
+    const [catRes, itemRes, settingsRes] = await Promise.all([
+      db.from('categories')
+        .select('id,name_ar,name_en,name_he,note_ar,note_en,note_he,tag,sort_order,is_active')
+        .order('sort_order', { ascending: true }),
+      db.from('menu_items')
+        .select('id,category_id,name_ar,name_en,name_he,description_ar,description_en,description_he,price,price_label,image_url,image_fit,image_zoom,image_pos_x,image_pos_y,sort_order,is_available')
+        .order('sort_order', { ascending: true }),
+      db.from('settings').select('value').eq('key', 'meal_offers').maybeSingle()
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
     ]);
 
     if (catRes.error)  throw catRes.error;
@@ -522,7 +544,11 @@ async function loadData() {
             descHe:       i.description_he || '',
             price:        i.price,
             priceLabel:   i.price_label   || '',
+<<<<<<< HEAD
             image:        tenantImageUrl(i.image_url),
+=======
+            image:        i.image_url     || '',
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
             imageFit:     i.image_fit     || 'cover',
             imageZoom:    Number(i.image_zoom ?? 100),
             imagePosX:    Number(i.image_pos_x ?? 50),
@@ -556,6 +582,7 @@ function clampNumber(value, min, max, fallback) {
   return Math.max(min, Math.min(max, number));
 }
 
+<<<<<<< HEAD
 function tenantImageUrl(url) {
   const raw = String(url || '').trim();
   const slug = currentRestaurant?.slug;
@@ -571,6 +598,8 @@ function tenantImageUrl(url) {
   return `${prefix}${slug}/${path}`;
 }
 
+=======
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
 function getImageSettings(item = {}) {
   return {
     fit: ['cover', 'contain', 'fill'].includes(item.imageFit) ? item.imageFit : 'cover',
@@ -978,9 +1007,13 @@ async function uploadImageToSupabase(file) {
   }
 
   const compressed = await compressImageForUpload(file);
+<<<<<<< HEAD
   if (!currentRestaurant?.slug) throw new Error('Restaurant must be loaded before uploading.');
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80);
   const fileName = `${currentRestaurant.slug}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeName.replace(/\.[^.]+$/, '')}.${compressed.ext}`;
+=======
+  const fileName = Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + compressed.ext;
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
 
   const { error: uploadError } = await db.storage
     .from('images')
@@ -1154,7 +1187,10 @@ function deleteItem() {
 
 function buildCategoryPayload(sec, index) {
   return {
+<<<<<<< HEAD
     restaurant_id: currentRestaurantId,
+=======
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
     note_ar: sec.note?.ar || '',
     note_en: sec.note?.en || '',
     note_he: sec.note?.he || '',
@@ -1164,7 +1200,10 @@ function buildCategoryPayload(sec, index) {
 
 function buildItemPayload(sec, item, index) {
   return {
+<<<<<<< HEAD
     restaurant_id: currentRestaurantId,
+=======
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
     category_id:  sec.id,
     name_ar:      item.ar,
     name_en:      item.en          || '',
@@ -1216,7 +1255,11 @@ function getStoragePathFromPublicUrl(url) {
 
 async function removeStoredImage(url) {
   const path = getStoragePathFromPublicUrl(url);
+<<<<<<< HEAD
   if (!path || !currentRestaurant?.slug || !path.startsWith(`${currentRestaurant.slug}/`)) return { removed: false, skipped: true, error: null };
+=======
+  if (!path) return { removed: false, skipped: true, error: null };
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
 
   const { error } = await db.storage.from('images').remove([path]);
   if (error) {
@@ -1312,7 +1355,11 @@ async function cleanupUnusedImages() {
         .map(getStoragePathFromPublicUrl)
         .filter(Boolean)
     );
+<<<<<<< HEAD
     const allFiles = await listAllStorageFiles('images', currentRestaurant.slug);
+=======
+    const allFiles = await listAllStorageFiles('images');
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
     const cutoff = Date.now() - 60 * 60 * 1000;
     const unused = allFiles
       .filter(file => {
@@ -1372,14 +1419,22 @@ async function saveToSupabase() {
       if (before === JSON.stringify(categoryPayload)) continue;
 
       const { error } = await db
+<<<<<<< HEAD
         .from('categories').update(categoryPayload).eq('id', sec.id).eq('restaurant_id', currentRestaurantId);
+=======
+        .from('categories').update(categoryPayload).eq('id', sec.id);
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
       if (error) throw error;
       categoryUpdates++;
     }
 
     // Delete removed items
     for (const deleted of deletedItems) {
+<<<<<<< HEAD
       const { error } = await db.from('menu_items').delete().eq('id', deleted.id).eq('restaurant_id', currentRestaurantId);
+=======
+      const { error } = await db.from('menu_items').delete().eq('id', deleted.id);
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
       if (error) throw error;
       const imageResult = await removeStoredImage(deleted.image);
       if (imageResult.removed) imageDeletes++;
@@ -1407,7 +1462,11 @@ async function saveToSupabase() {
 
           const oldPayload = before ? JSON.parse(before) : null;
           const { error } = await db
+<<<<<<< HEAD
             .from('menu_items').update(payload).eq('id', item.id).eq('restaurant_id', currentRestaurantId);
+=======
+            .from('menu_items').update(payload).eq('id', item.id);
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
           if (error) throw error;
 
           if (oldPayload?.image_url && oldPayload.image_url !== payload.image_url) {
@@ -1462,7 +1521,11 @@ async function saveOffers() {
 
   try {
     const { error } = await db.from('settings')
+<<<<<<< HEAD
       .upsert({ restaurant_id: currentRestaurantId, key: 'meal_offers', value, updated_at: new Date().toISOString() }, { onConflict: 'restaurant_id,key' });
+=======
+      .upsert({ key: 'meal_offers', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+>>>>>>> c23497a0c6bcc3d5368b205e8794a2aaac07c9c7
 
     if (error) throw error;
 
