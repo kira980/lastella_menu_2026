@@ -1,0 +1,14 @@
+{
+  "file_hashes": {
+    "supabase.js": "565a0ba1b8f28c1093ace7abf5982a637212df3f07b2a74fe3f87a7d3ee94db1"
+  },
+  "indexed_at_commit": "",
+  "indexed_at_timestamp": "2026-06-06T12:07:29.349772600+00:00",
+  "schema_version": 3,
+  "stats": {
+    "total_edges": 0,
+    "total_files": 1,
+    "total_nodes": 0
+  },
+  "vexp_version": "2.0.25"
+}
