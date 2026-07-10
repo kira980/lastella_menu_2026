@@ -1,550 +1,89 @@
-html = r'''<!DOCTYPE html>
+original = r'''<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <title>LaStella – قائمة المطعم</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
-
   <style>
     :root {
-      --bg:#05050a;
-      --bg-soft:#10101a;
-      --card:#171724;
-      --accent:#d4a258;
-      --accent-soft:rgba(212,162,88,.18);
-      --accent-strong:rgba(212,162,88,.35);
-      --text-main:#fff;
-      --text-muted:#b6b6c8;
-      --border-soft:#282838;
+      --bg:#05050a; --bg-soft:#10101a; --card:#171724;
+      --accent:#d4a258; --accent-soft:rgba(212,162,88,.18);
+      --accent-strong:rgba(212,162,88,.35); --text-main:#fff;
+      --text-muted:#b6b6c8; --border-soft:#282838;
     }
-
-    * {
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    }
-
-    body {
-      background:radial-gradient(circle at top,#171724 0,#030307 45%,#000 100%);
-      color:var(--text-main);
-      min-height:100vh;
-      padding:12px;
-    }
-
-    body.is-loading { overflow:hidden; }
-    body.is-loading .page { opacity:0; pointer-events:none; }
-
-    .loading-screen {
-      position:fixed;
-      inset:0;
-      z-index:9999;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:radial-gradient(circle at top,#222 0%,#020202 40%,#000 100%);
-      color:#f5f5f5;
-      font-family:"Cairo",system-ui,-apple-system,sans-serif;
-      transition:opacity .45s ease,visibility .45s ease;
-    }
-
-    .loading-screen::before {
-      content:"";
-      position:fixed;
-      inset:0;
-      background:radial-gradient(circle at center,transparent 45%,rgba(0,0,0,.7) 100%);
-      pointer-events:none;
-      z-index:-2;
-    }
-
-    .loading-screen::after {
-      content:"";
-      position:fixed;
-      inset:18px;
-      border-radius:18px;
-      border:1px solid rgba(255,215,0,.28);
-      box-shadow:0 0 25px rgba(255,215,0,.25),0 0 60px rgba(0,0,0,.9) inset;
-      pointer-events:none;
-      z-index:-1;
-    }
-
-    .loading-screen.done { opacity:0; visibility:hidden; }
-
-    .loading-particles {
-      position:fixed;
-      inset:0;
-      overflow:hidden;
-      pointer-events:none;
-      z-index:-1;
-    }
-
-    .loading-particle {
-      position:absolute;
-      width:3px;
-      height:3px;
-      border-radius:50%;
-      background:rgba(255,215,0,.85);
-      filter:blur(.3px);
-      opacity:.7;
-      animation:floatUp 9s linear infinite;
-      animation-delay:-6s;
-    }
-
-    .loading-particle:nth-child(2) {
-      width:2px;
-      height:2px;
-      left:20%;
-      animation-duration:11s;
-      animation-delay:-3s;
-      opacity:.5;
-    }
-
-    .loading-particle:nth-child(3) {
-      width:4px;
-      height:4px;
-      left:40%;
-      animation-duration:13s;
-      animation-delay:-6s;
-      opacity:.7;
-    }
-
-    .loading-particle:nth-child(4) {
-      width:2px;
-      height:2px;
-      left:60%;
-      animation-duration:10s;
-      animation-delay:-2s;
-      opacity:.6;
-    }
-
-    .loading-particle:nth-child(5) {
-      width:3px;
-      height:3px;
-      left:75%;
-      animation-duration:14s;
-      animation-delay:-5s;
-      opacity:.8;
-    }
-
-    .loading-particle:nth-child(6) {
-      width:2px;
-      height:2px;
-      left:10%;
-      animation-duration:12s;
-      animation-delay:-4s;
-      opacity:.5;
-    }
-
-    .loading-wrapper { text-align:center; padding:24px; }
-
-    .loading-wrapper,
-    .loading-wrapper * {
-      font-family:"Cairo",system-ui,-apple-system,sans-serif;
-    }
-
-    .loading-logo-wrapper {
-      width:200px;
-      height:200px;
-      margin:0 auto 20px;
-      position:relative;
-    }
-
-    .loading-logo-wrapper::before {
-      content:"";
-      position:absolute;
-      inset:-14px;
-      border-radius:50%;
-      box-shadow:0 0 35px rgba(255,215,0,.4),0 0 70px rgba(255,215,0,.18);
-      opacity:.8;
-      filter:blur(2px);
-      z-index:-2;
-    }
-
-    .loading-logo-wrapper img {
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-      border-radius:50%;
-    }
-
-    .loading-headline {
-      font-family:"Playfair Display",serif;
-      font-size:24px;
-      margin-bottom:6px;
-      letter-spacing:.06em;
-    }
-
-    .loading-sub-headline { font-size:14px; opacity:.88; }
-
-    .loading-sub-headline span {
-      color:#ffd700;
-      font-weight:600;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      font-family:"Playfair Display",serif;
-      font-size:15px;
-    }
-
-    .loading-divider {
-      width:120px;
-      height:1px;
-      margin:18px auto;
-      background:linear-gradient(to right,transparent,rgba(255,215,0,.85),transparent);
-    }
-
-    .loading-status {
-      margin-top:10px;
-      font-size:13px;
-      opacity:.8;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-
-    .loading-dot {
-      width:9px;
-      height:9px;
-      border-radius:50%;
-      background:#ffd700;
-      position:relative;
-      flex:0 0 auto;
-    }
-
-    .loading-dot::after {
-      content:"";
-      position:absolute;
-      inset:-4px;
-      border-radius:50%;
-      border:1px solid rgba(255,215,0,.6);
-      animation:ping 1s linear infinite;
-      animation-delay:-.45s;
-    }
-
-    @keyframes ping {
-      0% { transform:scale(1); opacity:1; }
-      100% { transform:scale(1.9); opacity:0; }
-    }
-
-    @keyframes floatUp {
-      0% { transform:translateY(100vh); opacity:0; }
-      10% { opacity:.75; }
-      90% { opacity:.4; }
-      100% { transform:translateY(-10vh); opacity:0; }
-    }
-
-    .page {
-      max-width:960px;
-      margin:0 auto 48px auto;
-      position:relative;
-    }
-
-    .lang-switch {
-      position:absolute;
-      top:10px;
-      left:12px;
-      display:flex;
-      gap:6px;
-      z-index:20;
-    }
-
-    .lang-pill {
-      padding:4px 10px;
-      border-radius:999px;
-      border:1px solid var(--border-soft);
-      background:rgba(0,0,0,.7);
-      color:var(--text-muted);
-      font-size:11px;
-      cursor:pointer;
-      transition:background .2s,color .2s,border-color .2s;
-    }
-
-    .lang-pill.active {
-      background:var(--accent-soft);
-      color:var(--accent);
-      border-color:var(--accent-strong);
-    }
-
-    .preload {
-      position:relative;
-      margin-top:48px;
-      margin-bottom:20px;
-      border-radius:26px;
-      padding:24px 18px 26px;
-      background:
-        radial-gradient(circle at top right,rgba(212,162,88,.35),transparent 55%),
-        linear-gradient(145deg,#11111c,#05050a);
-      border:1px solid var(--accent-strong);
-      box-shadow:0 20px 55px rgba(0,0,0,.75);
-      overflow:hidden;
-    }
-
-    .hero-logo {
-      position:absolute;
-      top:16px;
-      right:18px;
-      width:96px;
-      height:auto;
-      opacity:.98;
-      pointer-events:none;
-    }
-
-    .intro-text {
-      margin-top:120px;
-      color:var(--text-muted);
-      font-size:14px;
-      line-height:1.7;
-    }
-
-    .preload-actions {
-      margin-top:18px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      align-items:center;
-    }
-
-    .btn-primary {
-      padding:9px 20px;
-      border-radius:999px;
-      border:none;
-      cursor:pointer;
-      background:var(--accent);
-      color:#120f0b;
-      font-size:14px;
-      font-weight:600;
-      box-shadow:0 10px 30px rgba(212,162,88,.6);
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-    }
-
-    .category-strip {
-      margin:18px 0 12px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      justify-content:center;
-    }
-
-    .category-pill {
-      padding:6px 14px;
-      border-radius:999px;
-      border:1px solid var(--border-soft);
-      background:#070712;
-      color:var(--text-muted);
-      font-size:13px;
-      cursor:pointer;
-      transition:background .2s,color .2s,border-color .2s;
-    }
-
-    .category-pill.active,
-    .category-pill:hover {
-      background:var(--accent-soft);
-      color:var(--accent);
-      border-color:var(--accent-strong);
-    }
-
-    .meal-offers {
-      width:min(100%,520px);
-      margin:16px auto 0;
-      padding:12px 18px;
-      border-radius:14px;
-      background:rgba(0,0,0,.35);
-      border:1px dashed rgba(212,162,88,.5);
-      text-align:center;
-    }
-
-    .meal-offers-title {
-      font-size:13px;
-      color:var(--accent);
-      margin-bottom:6px;
-      text-align:center;
-    }
-
-    .meal-offers-list {
-      list-style:none;
-      padding:0;
-      margin:0;
-    }
-
-    .meal-offers-list li {
-      font-size:12px;
-      color:var(--text-muted);
-      margin-bottom:3px;
-      line-height:1.5;
-      text-align:center;
-    }
-
-    .sections-wrapper {
-      position:relative;
-      min-height:200px;
-    }
-
-    .menu-section {
-      margin-bottom:26px;
-      padding:18px 16px 12px;
-      border-radius:22px;
-      background:linear-gradient(145deg,#10101c,#060610);
-      border:1px solid var(--border-soft);
-      box-shadow:0 16px 35px rgba(0,0,0,.7);
-      display:none;
-    }
-
-    .menu-section.active-section { display:block; }
-
-    .section-header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:8px;
-    }
-
-    .section-title { font-size:18px; }
-
-    .section-title .dot {
-      color:var(--accent);
-      margin-inline-start:6px;
-    }
-
-    .section-tag {
-      font-size:11px;
-      padding:3px 10px;
-      border-radius:999px;
-      background:var(--accent-soft);
-      color:var(--accent);
-      white-space:nowrap;
-    }
-
-    .section-note {
-      font-size:12px;
-      color:var(--text-muted);
-      margin-bottom:10px;
-    }
-
-    .menu-item {
-      display:grid;
-      grid-template-columns:minmax(0,1fr) auto;
-      column-gap:12px;
-      row-gap:4px;
-      padding:10px 0;
-      border-bottom:1px dashed rgba(130,130,150,.45);
-    }
-
-    .menu-item:last-child {
-      border-bottom:none;
-      padding-bottom:0;
-    }
-
-    .item-main { min-width:0; }
-
-    .item-name-row {
-      display:flex;
-      align-items:center;
-      gap:6px;
-      margin-bottom:2px;
-    }
-
-    .item-name {
-      font-size:15px;
-      font-weight:600;
-    }
-
-    .item-description {
-      font-size:12px;
-      color:var(--text-muted);
-      line-height:1.55;
-      margin:3px 0 0;
-    }
-
-    .item-price {
-      font-size:15px;
-      font-weight:600;
-      white-space:nowrap;
-      text-align:left;
-      align-self:center;
-    }
-
-    .item-photo-frame {
-      width:100%;
-      max-width:220px;
-      height:140px;
-      border-radius:18px;
-      margin-top:6px;
-      overflow:hidden;
-      border:1px solid var(--border-soft);
-      background:#070712;
-      cursor:pointer;
-      padding:0;
-      display:block;
-    }
-
-    .item-photo {
-      width:100%;
-      height:100%;
-      display:block;
-    }
-
-    .image-lightbox {
-      position:fixed;
-      inset:0;
-      z-index:9998;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      background:rgba(0,0,0,.82);
-    }
-
-    .image-lightbox.open { display:flex; }
-
-    .lightbox-img {
-      max-width:min(96vw,980px);
-      max-height:88vh;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.2);
-      box-shadow:0 24px 80px rgba(0,0,0,.75);
-      object-fit:contain;
-      background:#05050a;
-    }
-
-    .lightbox-close {
-      position:fixed;
-      top:16px;
-      right:16px;
-      width:38px;
-      height:38px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.3);
-      background:rgba(0,0,0,.65);
-      color:#fff;
-      font-size:24px;
-      line-height:1;
-      cursor:pointer;
-    }
-
-    .loading-text {
-      text-align:center;
-      color:var(--text-muted);
-      font-size:14px;
-      padding:40px 0;
-    }
-
-    @media(max-width:600px) {
-      body { padding:10px; }
-      .loading-logo-wrapper { width:168px; height:168px; }
-      .preload { padding-inline:14px; }
-      .hero-logo { width:78px; top:14px; right:14px; }
-      .menu-section { padding-inline:12px; }
-    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+    body{background:radial-gradient(circle at top,#171724 0,#030307 45%,#000 100%);color:var(--text-main);min-height:100vh;padding:12px;}
+    body.is-loading{overflow:hidden;}
+    body.is-loading .page{opacity:0;pointer-events:none;}
+    .loading-screen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at top,#222 0%,#020202 40%,#000 100%);color:#f5f5f5;font-family:"Cairo",system-ui,-apple-system,sans-serif;transition:opacity .45s ease,visibility .45s ease;}
+    .loading-screen::before{content:"";position:fixed;inset:0;background:radial-gradient(circle at center,transparent 45%,rgba(0,0,0,.7) 100%);pointer-events:none;z-index:-2;}
+    .loading-screen::after{content:"";position:fixed;inset:18px;border-radius:18px;border:1px solid rgba(255,215,0,.28);box-shadow:0 0 25px rgba(255,215,0,.25),0 0 60px rgba(0,0,0,.9) inset;pointer-events:none;z-index:-1;}
+    .loading-screen.done{opacity:0;visibility:hidden;}
+    .loading-particles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:-1;}
+    .loading-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(255,215,0,.85);filter:blur(.3px);opacity:.7;animation:floatUp 9s linear infinite;animation-delay:-6s;}
+    .loading-particle:nth-child(2){width:2px;height:2px;left:20%;animation-duration:11s;animation-delay:-3s;opacity:.5;}
+    .loading-particle:nth-child(3){width:4px;height:4px;left:40%;animation-duration:13s;animation-delay:-6s;opacity:.7;}
+    .loading-particle:nth-child(4){width:2px;height:2px;left:60%;animation-duration:10s;animation-delay:-2s;opacity:.6;}
+    .loading-particle:nth-child(5){width:3px;height:3px;left:75%;animation-duration:14s;animation-delay:-5s;opacity:.8;}
+    .loading-particle:nth-child(6){width:2px;height:2px;left:10%;animation-duration:12s;animation-delay:-4s;opacity:.5;}
+    .loading-wrapper{text-align:center;padding:24px;}
+    .loading-wrapper,.loading-wrapper *{font-family:"Cairo",system-ui,-apple-system,sans-serif;}
+    .loading-logo-wrapper{width:200px;height:200px;margin:0 auto 20px;position:relative;}
+    .loading-logo-wrapper::before{content:"";position:absolute;inset:-14px;border-radius:50%;box-shadow:0 0 35px rgba(255,215,0,.4),0 0 70px rgba(255,215,0,.18);opacity:.8;filter:blur(2px);z-index:-2;}
+    .loading-logo-wrapper img{width:100%;height:100%;object-fit:contain;display:block;border-radius:50%;}
+    .loading-headline{font-family:"Playfair Display",serif;font-size:24px;margin-bottom:6px;letter-spacing:.06em;}
+    .loading-sub-headline{font-size:14px;opacity:.88;}
+    .loading-sub-headline span{color:#ffd700;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:"Playfair Display",serif;font-size:15px;}
+    .loading-divider{width:120px;height:1px;margin:18px auto;background:linear-gradient(to right,transparent,rgba(255,215,0,.85),transparent);}
+    .loading-status{margin-top:10px;font-size:13px;opacity:.8;display:inline-flex;align-items:center;gap:8px;}
+    .loading-dot{width:9px;height:9px;border-radius:50%;background:#ffd700;position:relative;flex:0 0 auto;}
+    .loading-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(255,215,0,.6);animation:ping 1s linear infinite;animation-delay:-.45s;}
+    @keyframes ping{0%{transform:scale(1);opacity:1;}100%{transform:scale(1.9);opacity:0;}}
+    @keyframes floatUp{0%{transform:translateY(100vh);opacity:0;}10%{opacity:.75;}90%{opacity:.4;}100%{transform:translateY(-10vh);opacity:0;}}
+    .page{max-width:960px;margin:0 auto 48px auto;position:relative;}
+    .lang-switch{position:absolute;top:10px;left:12px;display:flex;gap:6px;z-index:20;}
+    .lang-pill{padding:4px 10px;border-radius:999px;border:1px solid var(--border-soft);background:rgba(0,0,0,.7);color:var(--text-muted);font-size:11px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .lang-pill.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-strong);}
+    .preload{position:relative;margin-top:48px;margin-bottom:20px;border-radius:26px;padding:24px 18px 26px;background:radial-gradient(circle at top right,rgba(212,162,88,.35),transparent 55%),linear-gradient(145deg,#11111c,#05050a);border:1px solid var(--accent-strong);box-shadow:0 20px 55px rgba(0,0,0,.75);overflow:hidden;}
+    .hero-logo{position:absolute;top:16px;right:18px;width:96px;height:auto;opacity:.98;pointer-events:none;}
+    .intro-text{margin-top:120px;color:var(--text-muted);font-size:14px;line-height:1.7;}
+    .preload-actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+    .btn-primary{padding:9px 20px;border-radius:999px;border:none;cursor:pointer;background:var(--accent);color:#120f0b;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(212,162,88,.6);display:inline-flex;align-items:center;gap:6px;}
+    .category-strip{margin:18px 0 12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+    .category-pill{padding:6px 14px;border-radius:999px;border:1px solid var(--border-soft);background:#070712;color:var(--text-muted);font-size:13px;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .category-pill.active,.category-pill:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-strong);}
+    .meal-offers{width:min(100%,520px);margin:16px auto 0;padding:12px 18px;border-radius:14px;background:rgba(0,0,0,0.35);border:1px dashed rgba(212,162,88,0.5);text-align:center;}
+    .meal-offers-title{font-size:13px;color:var(--accent);margin-bottom:6px;text-align:center;}
+    .meal-offers-list{list-style:none;padding:0;margin:0;}
+    .meal-offers-list li{font-size:12px;color:var(--text-muted);margin-bottom:3px;line-height:1.5;text-align:center;}
+    .sections-wrapper{position:relative;min-height:200px;}
+    .menu-section{margin-bottom:26px;padding:18px 16px 12px;border-radius:22px;background:linear-gradient(145deg,#10101c,#060610);border:1px solid var(--border-soft);box-shadow:0 16px 35px rgba(0,0,0,.7);display:none;}
+    .menu-section.active-section{display:block;}
+    .section-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+    .section-title{font-size:18px;}
+    .section-title .dot{color:var(--accent);margin-inline-start:6px;}
+    .section-tag{font-size:11px;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
+    .section-note{font-size:12px;color:var(--text-muted);margin-bottom:10px;}
+    .menu-item{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:4px;padding:10px 0;border-bottom:1px dashed rgba(130,130,150,.45);}
+    .menu-item:last-child{border-bottom:none;padding-bottom:0;}
+    .item-main{min-width:0;}
+    .item-name-row{display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+    .item-name{font-size:15px;font-weight:600;}
+    .item-description{font-size:12px;color:var(--text-muted);line-height:1.55;margin:3px 0 0;}
+    .item-price{font-size:15px;font-weight:600;white-space:nowrap;text-align:left;align-self:center;}
+    .item-photo-frame{width:100%;max-width:220px;height:140px;border-radius:18px;margin-top:6px;overflow:hidden;border:1px solid var(--border-soft);background:#070712;cursor:pointer;padding:0;display:block;}
+    .item-photo{width:100%;height:100%;display:block;}
+    .image-lightbox{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);}
+    .image-lightbox.open{display:flex;}
+    .lightbox-img{max-width:min(96vw,980px);max-height:88vh;border-radius:14px;border:1px solid rgba(255,255,255,.2);box-shadow:0 24px 80px rgba(0,0,0,.75);object-fit:contain;background:#05050a;}
+    .lightbox-close{position:fixed;top:16px;right:16px;width:38px;height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.65);color:#fff;font-size:24px;line-height:1;cursor:pointer;}
+    .loading-text{text-align:center;color:var(--text-muted);font-size:14px;padding:40px 0;}
+    @media(max-width:600px){body{padding:10px;}.loading-logo-wrapper{width:168px;height:168px;}.preload{padding-inline:14px;}.hero-logo{width:78px;top:14px;right:14px;}.menu-section{padding-inline:12px;}}
   </style>
 </head>
-
 <body class="is-loading">
   <div class="loading-screen" id="loadingScreen" aria-live="polite">
     <div class="loading-particles">
@@ -558,41 +97,27 @@ html = r'''<!DOCTYPE html>
 
     <div class="loading-wrapper">
       <div class="loading-logo-wrapper">
-        <img
-          src="https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png"
-          alt="La Stella Restaurant Logo"
-          onerror="this.style.display='none'"
-        >
+        <img src="https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png" alt="La Stella Restaurant Logo" onerror="this.style.display='none'">
       </div>
 
       <div class="loading-headline">مرحبا بكم في لاستيلا</div>
       <div class="loading-sub-headline">Welcome to <span>La&nbsp;Stella</span></div>
       <div class="loading-divider"></div>
-
       <div class="loading-status">
         <span class="loading-dot"></span>
         <span id="loadingScreenText">Opening menu...</span>
       </div>
     </div>
   </div>
-
   <div class="page">
     <div class="lang-switch">
       <button class="lang-pill active" data-lang="ar">العربية</button>
       <button class="lang-pill" data-lang="he">עברית</button>
       <button class="lang-pill" data-lang="en">English</button>
     </div>
-
     <section class="preload">
-      <img
-        src="https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png"
-        alt="La Stella"
-        class="hero-logo"
-        onerror="this.style.display='none'"
-      />
-
+      <img src="https://xkwrahcccckmrgiqrhoe.supabase.co/storage/v1/object/public/images/lastella-logo.png" alt="La Stella" class="hero-logo" onerror="this.style.display='none'" />
       <p class="intro-text" id="introText"></p>
-
       <div class="preload-actions">
         <button class="btn-primary" id="goToMenuBtn">
           <span id="btnLabel">انتقال للمنيو</span>
@@ -600,41 +125,23 @@ html = r'''<!DOCTYPE html>
         </button>
       </div>
     </section>
-
     <div class="meal-offers" id="mealOffersBox">
       <div class="meal-offers-title" id="mealOffersTitle"></div>
       <ul class="meal-offers-list" id="mealOffersList"></ul>
     </div>
-
     <nav class="category-strip" id="categoryStrip"></nav>
-
     <div class="sections-wrapper" id="sectionsWrapper">
       <p class="loading-text" id="loadingText">Opening menu...</p>
     </div>
   </div>
-
   <div class="image-lightbox" id="imageLightbox" aria-hidden="true">
-    <button
-      class="lightbox-close"
-      id="lightboxClose"
-      type="button"
-      aria-label="Close image"
-    >×</button>
-
+    <button class="lightbox-close" id="lightboxClose" type="button" aria-label="Close image">×</button>
     <img class="lightbox-img" id="lightboxImg" alt="" />
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="supabase.js"></script>
-
   <script>
-    /*
-      IMPORTANT:
-      Replace the value below with the real La Stella business UUID
-      stored in your Supabase database.
-    */
-    const BUSINESS_ID = 'f98bdda3-b67e-4cd4-8b9e-53d56dc16cd3';
-
     const INTRO = {
       ar: 'أهلاً وسهلاً بكم في <strong>La Stella</strong>، مطعم بتفاصيل راقية ونكهات مشوية على أصولها.',
       en: 'Welcome to <strong>La Stella</strong>, a restaurant where elegant details meet perfectly grilled flavors.',
@@ -663,43 +170,67 @@ html = r'''<!DOCTYPE html>
     };
 
     const LANGS = {
-      ar: {
-        dir:'rtl',
-        btn:'انتقال للمنيو',
-        offersTitle:'عرض الوجبات',
-        loading:'Opening menu...',
-        error:'تعذّر تحميل القائمة. يرجى المحاولة لاحقاً.'
-      },
-      he: {
-        dir:'rtl',
-        btn:'לפתיחת התפריט',
-        offersTitle:'מבצעי ארוחות',
-        loading:'Opening menu...',
-        error:'שגיאה בטעינת התפריט.'
-      },
-      en: {
-        dir:'ltr',
-        btn:'View the menu',
-        offersTitle:'Meal Offers',
-        loading:'Opening menu...',
-        error:'Failed to load menu. Please try again.'
-      }
+      ar: { dir: 'rtl', btn: 'انتقال للمنيو',   offersTitle: 'عرض الوجبات',  loading: 'Opening menu...',  error: 'تعذّر تحميل القائمة. يرجى المحاولة لاحقاً.' },
+      he: { dir: 'rtl', btn: 'לפתיחת התפריט', offersTitle: 'מבצעי ארוחות',  loading: 'Opening menu...',  error: 'שגיאה בטעינת התפריט.' },
+      en: { dir: 'ltr', btn: 'View the menu',  offersTitle: 'Meal Offers',    loading: 'Opening menu...',  error: 'Failed to load menu. Please try again.' }
     };
 
-    let currentLang = 'ar';
+    let currentLang    = 'ar';
     let currentSection = null;
-    let allCategories = [];
-    let allItems = [];
+    let allCategories  = [];
+    let allItems       = [];
+    let currentRestaurant = null;
+
+    const DEFAULT_RESTAURANT_ID = '4927c28a-a89e-4339-9eea-cd97e10bb0ab';
+    const DEFAULT_RESTAURANT_SLUG = 'lastella';
+
+    function getRestaurantSlug() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('restaurant') || params.get('slug') || DEFAULT_RESTAURANT_SLUG;
+    }
+
+    function getRestaurantId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('restaurant_id') || params.get('id') || DEFAULT_RESTAURANT_ID;
+    }
+
+    async function loadRestaurant() {
+      const slug = getRestaurantSlug();
+      const restaurantId = getRestaurantId();
+
+      let query = db
+        .from('restaurant')
+        .select('id,name,slug,menu_url,is_active')
+        .eq('id', restaurantId)
+        .eq('is_active', true)
+        .limit(1);
+
+      if (slug) {
+        query = db
+          .from('restaurant')
+          .select('id,name,slug,menu_url,is_active')
+          .eq('slug', slug)
+          .eq('is_active', true)
+          .limit(1);
+      }
+
+      const { data, error } = await query.maybeSingle();
+
+      if (error) throw error;
+      if (!data) throw new Error(`Restaurant not found: ${slug || restaurantId}`);
+
+      return data;
+    }
 
     function getItemName(item, lang) {
-      if (lang === 'en' && item.name_en?.trim()) return item.name_en;
-      if (lang === 'he' && item.name_he?.trim()) return item.name_he;
+      if (lang === 'en' && item.name_en && item.name_en.trim()) return item.name_en;
+      if (lang === 'he' && item.name_he && item.name_he.trim()) return item.name_he;
       return item.name_ar || '';
     }
 
     function getItemDescription(item, lang) {
-      if (lang === 'en' && item.description_en?.trim()) return item.description_en;
-      if (lang === 'he' && item.description_he?.trim()) return item.description_he;
+      if (lang === 'en' && item.description_en && item.description_en.trim()) return item.description_en;
+      if (lang === 'he' && item.description_he && item.description_he.trim()) return item.description_he;
       return item.description_ar || '';
     }
 
@@ -710,52 +241,39 @@ html = r'''<!DOCTYPE html>
     }
 
     function getImageStyle(item) {
-      const fit = ['cover', 'contain', 'fill'].includes(item.image_fit)
-        ? item.image_fit
-        : 'cover';
-
+      const fit = ['cover', 'contain', 'fill'].includes(item.image_fit) ? item.image_fit : 'cover';
       const zoom = clampNumber(item.image_zoom, 60, 200, 100);
       const posX = clampNumber(item.image_pos_x, 0, 100, 50);
       const posY = clampNumber(item.image_pos_y, 0, 100, 50);
-
-      return [
-        `object-fit:${fit}`,
-        `object-position:${posX}% ${posY}%`,
-        `transform:scale(${zoom / 100})`,
-        `transform-origin:${posX}% ${posY}%`
-      ].join(';') + ';';
+      return `object-fit:${fit};object-position:${posX}% ${posY}%;transform:scale(${zoom / 100});transform-origin:${posX}% ${posY}%;`;
     }
 
     function getCatName(cat, lang) {
-      if (lang === 'en' && cat.name_en?.trim()) return cat.name_en;
-      if (lang === 'he' && cat.name_he?.trim()) return cat.name_he;
+      if (lang === 'en' && cat.name_en && cat.name_en.trim()) return cat.name_en;
+      if (lang === 'he' && cat.name_he && cat.name_he.trim()) return cat.name_he;
       return cat.name_ar || '';
     }
 
     function getCatNote(cat, lang) {
-      if (lang === 'en' && cat.note_en?.trim()) return cat.note_en;
-      if (lang === 'he' && cat.note_he?.trim()) return cat.note_he;
+      if (lang === 'en' && cat.note_en && cat.note_en.trim()) return cat.note_en;
+      if (lang === 'he' && cat.note_he && cat.note_he.trim()) return cat.note_he;
       return cat.note_ar || '';
     }
 
     function esc(str) {
       return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function setLoadingScreenText(text) {
-      const element = document.getElementById('loadingScreenText');
-      if (element) element.textContent = text;
+      const el = document.getElementById('loadingScreenText');
+      if (el) el.textContent = text;
     }
 
     function revealLoadedMenu() {
       const screen = document.getElementById('loadingScreen');
-
       document.body.classList.remove('is-loading');
-
       if (screen) {
         screen.classList.add('done');
         setTimeout(() => screen.remove(), 500);
@@ -764,184 +282,104 @@ html = r'''<!DOCTYPE html>
 
     function render(lang) {
       currentLang = lang;
-      const language = LANGS[lang];
-
+      const L = LANGS[lang];
       document.documentElement.lang = lang;
-      document.documentElement.dir = language.dir;
+      document.documentElement.dir  = L.dir;
 
-      document.querySelectorAll('.lang-pill').forEach(pill => {
-        pill.classList.toggle('active', pill.dataset.lang === lang);
-      });
+      document.querySelectorAll('.lang-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.lang === lang));
 
       document.getElementById('introText').innerHTML = INTRO[lang] || '';
-      document.getElementById('btnLabel').textContent = language.btn;
+      document.getElementById('btnLabel').textContent = L.btn;
 
-      const loadingElement = document.getElementById('loadingText');
-      if (loadingElement) loadingElement.textContent = language.loading;
-
-      setLoadingScreenText(language.loading);
+      const loadingEl = document.getElementById('loadingText');
+      if (loadingEl) loadingEl.textContent = L.loading;
+      setLoadingScreenText(L.loading);
 
       if (allCategories.length === 0) return;
 
       const strip = document.getElementById('categoryStrip');
       strip.innerHTML = '';
-
-      allCategories.forEach(category => {
+      allCategories.forEach(cat => {
         const pill = document.createElement('div');
-
-        pill.className =
-          'category-pill' +
-          (category.id === currentSection ? ' active' : '');
-
-        pill.textContent = getCatName(category, lang);
-        pill.dataset.section = category.id;
-        pill.addEventListener('click', () => activateSection(category.id));
-
+        pill.className = 'category-pill' + (cat.id === currentSection ? ' active' : '');
+        pill.textContent = getCatName(cat, lang);
+        pill.dataset.section = cat.id;
+        pill.addEventListener('click', () => activateSection(cat.id));
         strip.appendChild(pill);
       });
 
       const wrapper = document.getElementById('sectionsWrapper');
       wrapper.innerHTML = '';
+      allCategories.forEach(cat => {
+        const catItems = allItems.filter(item => item.category_id === cat.id);
+        const section  = document.createElement('section');
+        section.className = 'menu-section' + (cat.id === currentSection ? ' active-section' : '');
+        section.id = 'sec-' + cat.id;
 
-      allCategories.forEach(category => {
-        const categoryItems = allItems.filter(
-          item => item.category_id === category.id
-        );
-
-        const section = document.createElement('section');
-
-        section.className =
-          'menu-section' +
-          (category.id === currentSection ? ' active-section' : '');
-
-        section.id = 'sec-' + category.id;
-
-        const note = getCatNote(category, lang);
-
+        const note = getCatNote(cat, lang);
         section.innerHTML = `
           <div class="section-header">
-            <h2 class="section-title">
-              ${esc(getCatName(category, lang))}
-              <span class="dot">•</span>
-            </h2>
-            <div class="section-tag">${esc(category.tag || '')}</div>
+            <h2 class="section-title">${esc(getCatName(cat, lang))}<span class="dot">•</span></h2>
+            <div class="section-tag">${esc(cat.tag || '')}</div>
           </div>
           ${note ? `<p class="section-note">${esc(note)}</p>` : ''}
           <div style="margin-top:22px"></div>
         `;
 
-        categoryItems.forEach(item => {
+        catItems.forEach(item => {
           const article = document.createElement('article');
           article.className = 'menu-item';
-
-          const priceText =
-            item.price_label?.trim()
-              ? item.price_label
-              : item.price != null
-                ? '₪' + Number(item.price).toLocaleString()
-                : '—';
-
+          const priceText = (item.price_label && item.price_label.trim())
+            ? item.price_label
+            : (item.price != null ? '₪' + Number(item.price).toLocaleString() : '—');
           const name = esc(getItemName(item, lang));
           const description = esc(getItemDescription(item, lang));
-
           article.innerHTML = `
             <div class="item-main">
-              <div class="item-name-row">
-                <span class="item-name">${name}</span>
-              </div>
-
-              ${description
-                ? `<p class="item-description">${description}</p>`
-                : ''
-              }
-
-              ${item.image_url
-                ? `
-                  <div
-                    class="item-photo-frame"
-                    role="button"
-                    tabindex="0"
-                    data-full-image="${esc(item.image_url)}"
-                    data-image-alt="${name}"
-                  >
-                    <img
-                      src="${esc(item.image_url)}"
-                      alt="${name}"
-                      class="item-photo"
-                      loading="lazy"
-                      style="${getImageStyle(item)}"
-                      onerror="this.closest('.item-photo-frame').style.display='none'"
-                    />
-                  </div>
-                `
-                : ''
-              }
+              <div class="item-name-row"><span class="item-name">${name}</span></div>
+              ${description ? `<p class="item-description">${description}</p>` : ''}
+              ${item.image_url ? `<div class="item-photo-frame" role="button" tabindex="0" data-full-image="${esc(item.image_url)}" data-image-alt="${name}"><img src="${esc(item.image_url)}" alt="${name}" class="item-photo" loading="lazy" style="${getImageStyle(item)}" onerror="this.closest('.item-photo-frame').style.display='none'" /></div>` : ''}
             </div>
-
             <div class="item-price">${esc(priceText)}</div>
           `;
-
           section.appendChild(article);
         });
 
         wrapper.appendChild(section);
       });
 
-      document.getElementById('mealOffersTitle').textContent =
-        language.offersTitle;
-
+      document.getElementById('mealOffersTitle').textContent = L.offersTitle;
       const list = document.getElementById('mealOffersList');
       list.innerHTML = '';
-
       (mealOffers[lang] || []).forEach(line => {
-        const item = document.createElement('li');
-        item.textContent = line;
-        list.appendChild(item);
+        const li = document.createElement('li');
+        li.textContent = line;
+        list.appendChild(li);
       });
     }
 
     function activateSection(id) {
       currentSection = id;
-
-      document.querySelectorAll('.menu-section').forEach(section => {
-        section.classList.toggle(
-          'active-section',
-          section.id === 'sec-' + id
-        );
-      });
-
-      document.querySelectorAll('.category-pill').forEach(pill => {
-        pill.classList.toggle(
-          'active',
-          pill.dataset.section === String(id)
-        );
-      });
-
+      document.querySelectorAll('.menu-section').forEach(s =>
+        s.classList.toggle('active-section', s.id === 'sec-' + id));
+      document.querySelectorAll('.category-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.section === id));
       scrollToCategories();
     }
 
     function scrollToCategories() {
-      const element = document.getElementById('categoryStrip');
-      if (!element) return;
-
-      const top =
-        element.getBoundingClientRect().top +
-        window.scrollY -
-        10;
-
-      window.scrollTo({
-        top,
-        behavior:'smooth'
-      });
+      const el = document.getElementById('categoryStrip');
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 10;
+      window.scrollTo({ top, behavior: 'smooth' });
     }
 
     function openImageLightbox(src, alt) {
       const lightbox = document.getElementById('imageLightbox');
-      const image = document.getElementById('lightboxImg');
-
-      image.src = src;
-      image.alt = alt || '';
-
+      const img = document.getElementById('lightboxImg');
+      img.src = src;
+      img.alt = alt || '';
       lightbox.classList.add('open');
       lightbox.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
@@ -949,165 +387,77 @@ html = r'''<!DOCTYPE html>
 
     function closeImageLightbox() {
       const lightbox = document.getElementById('imageLightbox');
-      const image = document.getElementById('lightboxImg');
-
+      const img = document.getElementById('lightboxImg');
       lightbox.classList.remove('open');
       lightbox.setAttribute('aria-hidden', 'true');
-
-      image.src = '';
+      img.src = '';
       document.body.style.overflow = '';
     }
 
-    document
-      .getElementById('goToMenuBtn')
-      .addEventListener('click', scrollToCategories);
-
-    document
-      .getElementById('lightboxClose')
-      .addEventListener('click', closeImageLightbox);
-
-    document
-      .getElementById('imageLightbox')
-      .addEventListener('click', event => {
-        if (event.target.id === 'imageLightbox') {
-          closeImageLightbox();
-        }
-      });
-
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') {
-        closeImageLightbox();
-      }
-
-      const frame = event.target.closest?.('.item-photo-frame');
-
-      if (frame && (event.key === 'Enter' || event.key === ' ')) {
-        event.preventDefault();
-
-        openImageLightbox(
-          frame.dataset.fullImage,
-          frame.dataset.imageAlt
-        );
+    document.getElementById('goToMenuBtn').addEventListener('click', scrollToCategories);
+    document.getElementById('lightboxClose').addEventListener('click', closeImageLightbox);
+    document.getElementById('imageLightbox').addEventListener('click', e => {
+      if (e.target.id === 'imageLightbox') closeImageLightbox();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeImageLightbox();
+      const frame = e.target.closest?.('.item-photo-frame');
+      if (frame && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        openImageLightbox(frame.dataset.fullImage, frame.dataset.imageAlt);
       }
     });
-
-    document
-      .getElementById('sectionsWrapper')
-      .addEventListener('click', event => {
-        const frame = event.target.closest('.item-photo-frame');
-
-        if (frame) {
-          openImageLightbox(
-            frame.dataset.fullImage,
-            frame.dataset.imageAlt
-          );
-        }
-      });
-
-    document.querySelectorAll('.lang-pill').forEach(button => {
-      button.addEventListener('click', () => {
-        render(button.dataset.lang);
-      });
+    document.getElementById('sectionsWrapper').addEventListener('click', e => {
+      const frame = e.target.closest('.item-photo-frame');
+      if (frame) openImageLightbox(frame.dataset.fullImage, frame.dataset.imageAlt);
     });
+    document.querySelectorAll('.lang-pill').forEach(btn =>
+      btn.addEventListener('click', () => render(btn.dataset.lang)));
 
     render(currentLang);
 
     (async function loadMenu() {
       try {
-        if (
-          !BUSINESS_ID ||
-          BUSINESS_ID === 'f98bdda3-b67e-4cd4-8b9e-53d56dc16cd3'
-        ) {
-          throw new Error(
-            'BUSINESS_ID is not configured. Replace REPLACE_WITH_LASTELLA_BUSINESS_ID with the real business UUID.'
-          );
-        }
+        currentRestaurant = await loadRestaurant();
 
-        const [categoryResult, itemResult, settingsResult] =
-          await Promise.all([
-            db
-              .from('categories')
-              .select(`
-                id,
-                business_id,
-                name_ar,
-                name_en,
-                name_he,
-                note_ar,
-                note_en,
-                note_he,
-                tag,
-                sort_order
-              `)
-              .eq('business_id', BUSINESS_ID)
-              .eq('is_active', true)
-              .order('sort_order', { ascending:true }),
+        const [catResult, itemResult, settingsResult] = await Promise.all([
+          db.from('categories')
+            .select('id,name_ar,name_en,name_he,note_ar,note_en,note_he,tag,sort_order')
+            .eq('restaurant_id', currentRestaurant.id)
+            .eq('is_active', true)
+            .order('sort_order', { ascending: true }),
 
-            db
-              .from('menu_items')
-              .select(`
-                id,
-                business_id,
-                category_id,
-                name_ar,
-                name_en,
-                name_he,
-                description_ar,
-                description_en,
-                description_he,
-                price,
-                price_label,
-                image_url,
-                image_fit,
-                image_zoom,
-                image_pos_x,
-                image_pos_y,
-                sort_order
-              `)
-              .eq('restaurant_id', BUSINESS_ID)
-              .eq('is_available', true)
-              .order('sort_order', { ascending:true }),
+          db.from('menu_items')
+            .select('id,category_id,name_ar,name_en,name_he,description_ar,description_en,description_he,price,price_label,image_url,image_fit,image_zoom,image_pos_x,image_pos_y,sort_order')
+            .eq('restaurant_id', currentRestaurant.id)
+            .eq('is_available', true)
+            .order('sort_order', { ascending: true }),
 
-            db
-              .from('settings')
-              .select('value')
-              .eq('restaurant_id', BUSINESS_ID)
-              .eq('key', 'meal_offers')
-              .maybeSingle()
-          ]);
+          db.from('settings')
+            .select('value')
+            .eq('restaurant_id', currentRestaurant.id)
+            .eq('key', 'meal_offers')
+            .maybeSingle()
+        ]);
 
-        if (categoryResult.error) throw categoryResult.error;
+        if (catResult.error) throw catResult.error;
         if (itemResult.error) throw itemResult.error;
         if (settingsResult.error) throw settingsResult.error;
 
-        if (settingsResult.data?.value) {
-          mealOffers = settingsResult.data.value;
-        }
+        if (settingsResult.data?.value) mealOffers = settingsResult.data.value;
 
-        allCategories = categoryResult.data || [];
-        allItems = itemResult.data || [];
+        allCategories  = catResult.data  || [];
+        allItems       = itemResult.data || [];
         currentSection = allCategories[0]?.id || null;
 
         render(currentLang);
         revealLoadedMenu();
-      } catch (error) {
-        console.error('LaStella menu load error:', error);
-
-        const loadingElement =
-          document.getElementById('loadingText');
-
-        if (loadingElement) {
-          loadingElement.textContent =
-            LANGS[currentLang].error;
-        }
-
+      } catch (err) {
+        console.error('LaStella menu load error:', err);
+        const loadingEl = document.getElementById('loadingText');
+        if (loadingEl) loadingEl.textContent = LANGS[currentLang].error;
         setLoadingScreenText(LANGS[currentLang].error);
-
-        /*
-          Reveal the page even when loading fails, so the loading
-          overlay does not remain stuck forever.
-        */
-        revealLoadedMenu();
+        document.body.classList.remove('is-loading');
       }
     })();
   </script>
@@ -1115,8 +465,8 @@ html = r'''<!DOCTYPE html>
 </html>
 '''
 
-path = "/mnt/data/lastella-menu-updated.html"
+path = "/mnt/data/lastella-original-menu-restaurant-filter.html"
 with open(path, "w", encoding="utf-8") as f:
-    f.write(html)
+    f.write(original)
 
 print(path)
